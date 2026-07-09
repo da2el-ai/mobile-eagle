@@ -95,6 +95,15 @@ Chromium の制約。`item.fileURL` を `fetch()` しても失敗する。
 
 Pillow / sharp のようなネイティブ依存は不要。
 
+### JPEG 変換の前にキャンバスを白で塗る
+
+JPEG は透過を持てない。`OffscreenCanvas` は初期状態が透明なので、**塗らずに `drawImage()` すると
+元画像の透過部分が黒くなる**。`ctx.fillStyle = '#ffffff'` → `fillRect()` してから描く
+（Simple Eagle が Pillow でやっていた白背景合成の再現）。
+
+透過 PNG（`logo_d2@2x_white`）で実測し、完全透明だった 200 箇所すべてが白、黒は 0 箇所であることを確認済み。
+**この `fillRect()` は消さないこと。** 一見すると不要な処理に見えるが、消すと透過画像が黒く潰れる。
+
 ### ファイアウォールの許可ダイアログが出ない
 
 プラグインは Eagle 本体のプロセス内で動くため、Eagle が取得済みの許可がそのまま使われる。

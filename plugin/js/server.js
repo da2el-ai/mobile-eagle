@@ -97,9 +97,13 @@ ME.server = (() => {
           .catch((err) => {
             ME.logger.error(`ハンドラでエラー: ${req.method} ${pathname}`, err);
             if (!res.headersSent) {
-              // 存在しないリソースは 404、それ以外の失敗は 500
-              const statusCode = /見つかりません/.test(err.message || '') ? 404 : 500;
-              sendJson(res, statusCode, { status: 'error', message: err.message || 'Internal Server Error' });
+              // 存在しないリソースは 404、それ以外の失敗は 500。
+              // ENOENT は外部ボリューム切断などでファイル実体が消えた場合に出る
+              const isNotFound = err.code === 'ENOENT' || /見つかりません/.test(err.message || '');
+              sendJson(res, isNotFound ? 404 : 500, {
+                status: 'error',
+                message: err.message || 'Internal Server Error',
+              });
             }
           });
       } else {

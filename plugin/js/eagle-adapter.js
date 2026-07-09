@@ -146,6 +146,16 @@ ME.eagleAdapter = (() => {
     },
 
     /**
+     * アイテムを取得する。存在しなければ throw する（呼び出し側で 404 になる）。
+     * @param {string} id
+     */
+    async getItemById(id) {
+      const item = await eagle.item.getById(id);
+      if (!item) throw new Error(`アイテムが見つかりません: ${id}`);
+      return item;
+    },
+
+    /**
      * アイテムを更新する。送られてきたプロパティだけを書き換える。
      * @param {string} id
      * @param {object} data { tags?, annotation?, url?, star? }

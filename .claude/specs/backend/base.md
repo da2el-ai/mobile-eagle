@@ -340,8 +340,8 @@ UI 変更なし（ステータスウィンドウの UI は別仕様）。
 > `keywords` / `tags` / `folders` フィルタと並び順の実機確認結果が記録されている
 > → ユーザーがチェック → `/step-commit` でコミット
 
-- [ ] 7. `GET /api/eagle/get_thumbnail_image` を実装する
-- [ ] 8. `image.js`（`fs` 読み込み → OffscreenCanvas 圧縮 → キャッシュ）と
+- [x] 7. `GET /api/eagle/get_thumbnail_image` を実装する
+- [x] 8. `image.js`（`fs` 読み込み → OffscreenCanvas 圧縮 → キャッシュ）と
   `GET /api/eagle/get_image` を実装する。`onLibraryChanged` でのキャッシュ全削除もここで実装する
 
 > 📌 **コミットポイント 4** — スマホ（または curl）でサムネイルと拡大画像が取得できる。
