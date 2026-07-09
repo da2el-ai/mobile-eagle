@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mobile Eagle - 配信確認</title>
+  <style>
+    /* 動作確認用の仮ページ。フロントエンド移植で dist に置き換わる */
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      line-height: 1.7;
+      color: #f0f0f0;
+      background: linear-gradient(160deg, #1b2735 0%, #2c5364 100%);
+      min-height: 100vh;
+      text-align: center;
+    }
+
+    .count {
+      margin: 16px 0;
+      font-size: 56px;
+      font-weight: 700;
+      color: #7cc4ff;
+    }
+
+    button {
+      min-width: 160px;
+      min-height: 48px;
+      border: none;
+      border-radius: 10px;
+      background: #7cc4ff;
+      color: #10202e;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .ping {
+      margin-top: 24px;
+      font-family: Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #a8d5a8;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mobile Eagle</h1>
+  <p>静的配信の動作確認ページです。</p>
+
+  <div class="count" id="count">0</div>
+  <button type="button" id="btn">カウントアップ</button>
+
+  <div class="ping" id="ping">/api/ping を確認中…</div>
+
+  <script>
+    // JavaScript の配信確認（カウンター）と、同一オリジンのAPI疎通確認
+    let count = 0;
+    document.getElementById('btn').addEventListener('click', () => {
+      count += 1;
+      document.getElementById('count').textContent = String(count);
+    });
+
+    fetch('/api/ping')
+      .then((res) => res.json())
+      .then((json) => {
+        document.getElementById('ping').textContent = `/api/ping → ${JSON.stringify(json)}`;
+      })
+      .catch((err) => {
+        document.getElementById('ping').textContent = `/api/ping → エラー: ${err.message}`;
+      });
+  </script>
+</body>
+</html>
