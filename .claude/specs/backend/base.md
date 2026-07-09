@@ -118,13 +118,14 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 
 処理：
 
-1. `eagle.item.get()` にプラグイン API が対応する条件（`keywords` / `ext` / `tags` / `folders`）を渡す
+1. `eagle.item.get()` に条件を渡す
    - `tags` / `folders` はカンマ区切り文字列で届くため、**配列に分割してから**渡す
-   - `keywords` / `tags` / `folders` フィルタの実挙動は**未検証**（検証済みは `ext` のみ。オープン課題参照）
+   - **`keyword`（単数）はプラグイン API では無視される**ため、`keywords: [keyword]` に変換する
+   - 値が空の条件はキー自体を渡さない（`undefined` を渡すと挙動が不定になるため）
 2. 並べ替え・`offset × limit` のスキップ・`limit` 件の切り出しは **JS 側で行う**
    （プラグイン API に `orderBy` / `limit` / `offset` が存在しないため）
-3. デフォルトの並び順は**追加日時の降順**（Simple Eagle が使っていた Web API のデフォルト相当。
-   ソートキーのプロパティ名も含めて要実機確認。オープン課題参照）
+3. 並び順は **`importedAt` の降順**（＝追加日時の降順）。プラグイン API のデフォルトも同じだが、
+   保証された仕様ではないため明示的にソートする
 4. 各 item を**レスポンスマッピング**（後述 8.1）で Web API 互換の形に変換する
 5. 初版では毎リクエストで全件取得する（実測 2〜4 万件でも許容と判断）。体感で遅い場合は
    `fields` パラメータで返却フィールドを絞る最適化を検討する（オープン課題参照）
@@ -145,7 +146,13 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 - フロントが実際に使うのは **`id` / `name` / `children` / `imageCount` の 4 つのみ**
   （folderTree コンポーネントで確認済み）。残りのフィールド（`description` / `tags` 等）は
   型を満たすだけの空値でよい
-- プラグイン API のフォルダオブジェクトに `imageCount` があるかは**要実機確認**（オープン課題）
+- **`imageCount` はプラグイン API に存在しない**（実機調査で確定）。
+  `eagle.item.get({})` で全件取得し、各 item の `folders` 配列を集計して
+  フォルダ ID ごとの件数を数える。**1 回の全件取得で全フォルダ分を数えられる**
+  （フォルダごとに `get({folders:[id]})` を呼ぶとフォルダ数だけ全件走査が走るため避ける）
+- `imageCount` は「そのフォルダ直下の件数」。子フォルダ分の合算はフロントが行う
+  （`calculateTotalImageCount()`）ため、サーバー側では合算しない
+- `modificationTime` にはフォルダの `createdAt` を入れる（フォルダに更新日時が無いため）
 
 ### 6.3 `GET /api/eagle/get_thumbnail_image?id={id}` — サムネイル配信
 
@@ -193,10 +200,9 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 
 リクエスト：`{ "itemIds": string[] }`
 
-- プラグイン API での削除手段は**未検証**（T6 で検証したのは取得と `save()` のみ）。
-  `item.moveToTrash()` メソッドの実在を実装前に確認する（オープン課題）
-- 確認できない場合の代替は Web API（`localhost:41595` は同一マシンからなので認証不要）への
-  フォールバック。ただし Web API 依存が復活するため、採用するかはユーザーに確認する
+- `eagle.item.getById(id)` → `await item.moveToTrash()`（実機調査でメソッドの実在を確認済み）
+- Web API へのフォールバックは不要
+- 成功時は `{ "status": "success" }`、失敗時は `{ "status": "error", "message": "..." }`
 
 ### 6.7 圧縮画像キャッシュ
 
@@ -230,14 +236,16 @@ UI 変更なし（ステータスウィンドウの UI は別仕様）。
 
 フロントの `TImageItem` が期待するフィールドに合わせる。
 
+プロパティの実在はすべて実機調査で確認済み。
+
 | レスポンスのキー | プラグイン API の元プロパティ | 備考 |
 | --- | --- | --- |
-| `id` / `name` / `size` / `ext` | 同名 | 検証済み（T5/T6 で使用） |
-| `width` / `height` / `folders` | 同名 | 検証済み（T5/T6 で使用） |
-| `tags` / `annotation` / `url` | 同名 | **プロパティ名は未検証**（Step 4 で確認） |
-| `star` | `star` | **int に変換**。null / undefined は 0 |
-| `modificationTime` | `modifiedAt` | **名前が違う**。数値（ミリ秒）に揃える。**未検証**（Step 4 で確認） |
-| `lastModified` | `modifiedAt` | 同上（フロントの型に存在するため両方返す） |
+| `id` / `name` / `size` / `ext` | 同名 | |
+| `width` / `height` / `folders` / `tags` | 同名 | |
+| `annotation` / `url` | 同名 | |
+| `star` | `star` | **int に変換**。評価なしのとき `undefined` が返るため 0 にする |
+| `modificationTime` | `modifiedAt` | **名前が違う**。数値（ミリ秒） |
+| `lastModified` | `modifiedAt` | 同上（フロントの型に存在するため両方返す。値は同一） |
 
 **欠損値のデフォルト**：`annotation` / `url` は空文字、`tags` / `folders` は空配列で埋める。
 特に `annotation` は、フロントが null ガードなしで `image.annotation.toLowerCase()` を呼ぶ箇所が
@@ -321,11 +329,11 @@ UI 変更なし（ステータスウィンドウの UI は別仕様）。
 > curl --path-as-is が 403 を返す
 > → ユーザーがチェック → `/step-commit` でコミット
 
-- [ ] 4. `eagle-adapter.js` のマッピング層（item → `TImageItem` 互換 / folder → `TFolderItem` 互換）を
+- [x] 4. `eagle-adapter.js` のマッピング層（item → `TImageItem` 互換 / folder → `TFolderItem` 互換）を
   実装する。**このステップで未検証プロパティ（8.1 の表）とフォルダの `imageCount` の
   実機確認も行い、結果を plugin-test.md か knowledge.md に記録する**
-- [ ] 5. `GET /api/eagle/list`（フィルタ + JS ソート + ページング）と `GET /api/eagle/folders` を実装する
-- [ ] 6. JSON レスポンスの gzip 圧縮を実装する
+- [x] 5. `GET /api/eagle/list`（フィルタ + JS ソート + ページング）と `GET /api/eagle/folders` を実装する
+- [x] 6. JSON レスポンスの gzip 圧縮を実装する
 
 > 📌 **コミットポイント 3** — curl で `list` / `folders` が Simple Eagle 互換の JSON を返す。
 > `offset` がページ番号として機能する（`offset=1&limit=10` で 11 件目からが返る）。
@@ -350,20 +358,32 @@ UI 変更なし（ステータスウィンドウの UI は別仕様）。
 
 ## 13. オープン課題
 
-- [ ] プラグイン API のフォルダオブジェクトに `imageCount` があるか（Step 4 で実機確認。
-  無い場合の代替：`eagle.item.get({folders:[id]})` での件数取得は高コストなため、取得方法を再検討する）
-- [ ] item の未検証プロパティの実在確認（Step 4 で実機確認）：`modifiedAt` / `noThumbnail` /
-  `thumbnailPath` / `annotation` / `url` / `tags`。plugin-test で実際に使ったのは
-  `filePath` / `name` / `ext` / `width` / `height` / `size` / `folders` / `isDeleted` / `star` のみ
-- [ ] `eagle.item.get()` の `keywords` / `tags` / `folders` フィルタの実挙動（Step 5 で実機確認。
-  検証済みは `ext` のみ。特に `keywords` は Web API の `keyword` と検索対象・AND/OR が
-  同じになる保証がない）
-- [ ] `item.moveToTrash()`（または相当する削除 API）の実在（Step 10 で実機確認。
-  無い場合は Web API フォールバックの採否をユーザーに確認）
-- [ ] `/list` のデフォルト並び順の正確な再現（「追加日時の降順」と仮定。ソートキーの
-  プロパティ名（`importedAt` か `modifiedAt` か等）も含めて Step 5 で Simple Eagle の
-  表示順と実機比較する）
+### 解決済み（Step 4 の実機調査で確定・2026-07-09）
+
+- [x] **フォルダに `imageCount` は無い**。持つのは `id` / `name` / `description` / `children` /
+  `createdAt` / `parent` / `icon` / `iconColor` の 8 つのみ
+  → **代替**：`eagle.item.get({})` で全件取得し、各 item の `folders` を集計して数える
+  （1 回の全件取得で全フォルダ分を数えられる。フォルダごとに `get({folders:[id]})` を呼ぶと
+  フォルダ数だけ全件走査が走るため避ける）
+- [x] **item の未検証プロパティはすべて実在**：`modifiedAt` / `noThumbnail` / `thumbnailPath` /
+  `annotation` / `url` / `tags`。ただし **`star` は評価なしのとき `undefined`**（`0` ではない）
+- [x] **`keyword`（単数）は無視される**。全件が返る。**`keywords`（配列）を使う**こと。
+  Simple Eagle は Web API の `keyword` を使っていたので、`keywords: [keyword]` に変換する
+- [x] **`folders` フィルタは機能する**（実測で 421 件に絞り込まれた）
+- [x] **`tags` フィルタは機能する**（実測で `tags=NovelAI` が正しく絞り込まれた）
+- [x] **`item.moveToTrash()` は存在する**。Web API フォールバックは不要
+- [x] **デフォルトの並び順は `importedAt` の降順**（＝追加日時の降順）。Simple Eagle と一致する。
+  item が持つ日時は `importedAt` / `modifiedAt` の 2 つだけで、`lastModified` /
+  `modificationTime` / `btime` / `mtime` は存在しない
+
+### 未解決
+
 - [ ] `orderBy` パラメータの扱い（フロントは現在未使用。当面は「受け取るが無視」とし、
   フロント側で使う時に実装する想定）
-- [ ] `/list` の性能（毎リクエスト全件取得 + JS ソート。実測 2〜4 万件で問題が出た場合、
+- [ ] `/list` `/folders` の性能（毎リクエスト全件取得。実測 2〜4 万件で問題が出た場合、
   `fields` パラメータでの返却フィールド絞り込み、または取得結果の短時間メモリキャッシュを検討）
+- [ ] **`imageCount` の二重計上**（移植元から引き継いだ挙動）。フロントの
+  `calculateTotalImageCount()` は子孫の件数を親に足し込むが、**同じ画像が親と子の両方の
+  フォルダに属している場合、二重に数える**。Simple Eagle も同じ挙動なので当面そのままとする。
+  直す場合は、サーバー側で `descendantImageCount`（現在は未使用の空フィールド）に
+  重複を除いたユニーク件数を入れ、フロント側でそちらを参照するよう変更する

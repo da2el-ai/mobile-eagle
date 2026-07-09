@@ -9,6 +9,10 @@ window.ME = window.ME || {};
 
 ME.server = (() => {
   const http = require('http');
+  const zlib = require('zlib');
+
+  /** これ未満のレスポンスは gzip しない（圧縮の costs が利得を上回るため） */
+  const GZIP_MIN_BYTES = 1000;
 
   /** 稼働中のサーバー。停止中は null */
   let server = null;
@@ -32,15 +36,39 @@ ME.server = (() => {
 
   /**
    * JSON レスポンスを返す。
-   * gzip 圧縮（1KB 以上 + Accept-Encoding: gzip）は Step 6 でここに実装する。
+   * 一覧 JSON は数MBになるため、1KB 以上かつクライアントが対応していれば gzip で返す
+   * （Simple Eagle の GZipMiddleware 相当）。
    * @param {http.ServerResponse} res
    * @param {number} statusCode
    * @param {object} body
+   * @param {http.IncomingMessage} [req] 省略すると gzip しない
    */
-  function sendJson(res, statusCode, body) {
-    const json = JSON.stringify(body);
-    res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(json);
+  function sendJson(res, statusCode, body, req) {
+    const json = Buffer.from(JSON.stringify(body), 'utf8');
+    const headers = { 'Content-Type': 'application/json; charset=utf-8' };
+
+    const acceptsGzip = req && /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+    if (!acceptsGzip || json.length < GZIP_MIN_BYTES) {
+      headers['Content-Length'] = json.length;
+      res.writeHead(statusCode, headers);
+      res.end(json);
+      return;
+    }
+
+    zlib.gzip(json, (err, compressed) => {
+      if (err) {
+        // 圧縮に失敗しても非圧縮で返せばよい
+        ME.logger.error('gzip 圧縮に失敗したため非圧縮で返します', err);
+        headers['Content-Length'] = json.length;
+        res.writeHead(statusCode, headers);
+        res.end(json);
+        return;
+      }
+      headers['Content-Encoding'] = 'gzip';
+      headers['Content-Length'] = compressed.length;
+      res.writeHead(statusCode, headers);
+      res.end(compressed);
+    });
   }
 
   /** リクエスト1件を処理する */
@@ -69,7 +97,9 @@ ME.server = (() => {
           .catch((err) => {
             ME.logger.error(`ハンドラでエラー: ${req.method} ${pathname}`, err);
             if (!res.headersSent) {
-              sendJson(res, 500, { status: 'error', message: err.message || 'Internal Server Error' });
+              // 存在しないリソースは 404、それ以外の失敗は 500
+              const statusCode = /見つかりません/.test(err.message || '') ? 404 : 500;
+              sendJson(res, statusCode, { status: 'error', message: err.message || 'Internal Server Error' });
             }
           });
       } else {

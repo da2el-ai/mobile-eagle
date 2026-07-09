@@ -29,6 +29,9 @@
       isBootstrapping = false;
     }, BOOTSTRAP_GRACE_MS);
 
+    // API のルートを登録してからサーバーを起動する
+    ME.apiEagle.register();
+
     // 前回の設定を復元し、サーバーONなら自動起動する
     const settings = ME.settings.getAll();
     if (settings.serverEnabled) {

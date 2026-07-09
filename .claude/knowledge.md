@@ -27,6 +27,53 @@
 Eagle Web API（`localhost:41595`）にはあるが、プラグイン API にはない。
 数万件を一度に返すため、並べ替えと件数制限は JS 側で行う。
 
+### `keyword`（単数）は無視される。`keywords`（配列）を使う
+
+`eagle.item.get({ keyword: 'a' })` は**パラメータが無視され全件（19,142件）が返る**。
+`eagle.item.get({ keywords: ['a'] })` なら正しく絞り込まれる（14,854件）。
+
+Simple Eagle は Web API の `keyword`（単数）を使っていたので、移植時は
+**`keywords: [keyword]` に変換する必要がある**。
+
+なお `ext` / `tags` / `folders` フィルタは実測でいずれも正しく機能する。
+無視されるのは `keyword`（単数）だけ。
+
+### `folder` に `imageCount` は無い
+
+フォルダオブジェクトが持つのは `id` / `name` / `description` / `children` / `createdAt` /
+`parent` / `icon` / `iconColor` の 8 つだけ。Web API の `folder/list` にあった `imageCount` が無い。
+
+フォルダごとの件数が要るときは、`eagle.item.get({})` で全件取得し、
+各 item の `folders` 配列を集計して数える（1 回の全件取得で全フォルダ分を数えられる）。
+フォルダごとに `eagle.item.get({folders:[id]})` を呼ぶとフォルダ数だけ全件走査が走るため避ける。
+
+**API が返す `imageCount` は「そのフォルダ直下の件数」で、子孫は含まない。**
+子孫の合算はフロントの `calculateTotalImageCount()` が行うため、サーバー側で子孫を含めると
+二重計上になる。curl で API を直接叩くと子孫を含まない数字が見えるが、これが正しい
+（Web API の `folder/list` と同じ意味）。
+
+### `item.star` は評価なしのとき `undefined`（0 ではない）
+
+`0` が入っているわけではないので、`item.star || 0` のような正規化が必須。
+そのまま返すとフロントの型（`star?: number`）は通るが、評価フィルタが壊れる。
+
+### `eagle.item.get({})` のデフォルト並び順は `importedAt` の降順
+
+明示的なソート指定がなくても追加日時の新しい順で返る（実測で確認）。
+Simple Eagle が Web API のデフォルト順で表示していたものと一致する。
+
+item が持つ日時プロパティは **`importedAt` と `modifiedAt` の 2 つだけ**。
+`lastModified` / `modificationTime` / `btime` / `mtime` は**存在しない**（フロントの型に
+`modificationTime` / `lastModified` があるが、これは Web API 由来の名前なのでマッピングが要る）。
+
+### `item.moveToTrash()` は存在する
+
+item のメソッドは `addComment` / `moveToTrash` / `open` / `refreshThumbnail` / `removeComment` /
+`replaceFile` / `save` / `select` / `setCustomThumbnail` / `setDirty` / `updateComment`。
+
+削除のために Web API（`localhost:41595`）へフォールバックする必要はない。
+**ただしゴミ箱への「移動」ができるだけで、ゴミ箱の中身は依然として取得できない。**
+
 ### ゴミ箱内のアイテムは取得できない
 
 `isDeleted` プロパティは存在するが**常に `false`**。検索条件 `get({isDeleted: true})` は
