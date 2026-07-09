@@ -1,0 +1,19 @@
+{
+  "id": "MOBILE_EAGLE",
+  "version": "0.1.0",
+  "platform": "all",
+  "arch": "all",
+  "name": "Mobile Eagle",
+  "logo": "logo.png",
+  "keywords": ["mobile", "smartphone", "viewer", "server"],
+  "devTools": true,
+  "main": {
+    "url": "index.html",
+    "serviceMode": true,
+    "width": 720,
+    "height": 900,
+    "minWidth": 480,
+    "minHeight": 520,
+    "backgroundColor": "#1e1e1e"
+  }
+}

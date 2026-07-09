@@ -1,0 +1,10 @@
+{
+  "name": "mobile-eagle",
+  "version": "0.1.0",
+  "description": "画像管理アプリ Eagle をスマートフォンから閲覧するための Eagle プラグイン",
+  "private": true,
+  "license": "MIT",
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

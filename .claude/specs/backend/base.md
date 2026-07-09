@@ -305,9 +305,9 @@ UI 変更なし（ステータスウィンドウの UI は別仕様）。
 機能を上から順に実装する。各「📌 コミットポイント」は動作を確認できる区切りで、
 ユーザーのレビュー後に `/step-commit` でコミットすることを想定している。
 
-- [ ] 1. `plugin/` の雛形を作る（`manifest.json` / 最小限の `index.html` / `main.js` の
+- [x] 1. `plugin/` の雛形を作る（`manifest.json` / 最小限の `index.html` / `main.js` の
   ライフサイクル結線 / `logger.js`。`isBootstrapping` ガードを含む）
-- [ ] 2. `settings.js`（localStorage 読み書き・デフォルト値）と `server.js`（起動・停止・
+- [x] 2. `settings.js`（localStorage 読み書き・デフォルト値）と `server.js`（起動・停止・
   `EADDRINUSE` 処理・`GET /api/ping`）を実装し、`onPluginCreate` から自動起動する
 
 > 📌 **コミットポイント 1** — プラグインを Eagle に読み込むと HTTP サーバーが自動起動し、

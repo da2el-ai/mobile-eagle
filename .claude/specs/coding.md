@@ -67,6 +67,16 @@ Mobile Eagle には**実行環境の異なる 2 種類の JavaScript** がある
 
 - プラグイン側は **素の JavaScript**（ビルド不要にするため）。TypeScript は使わない
 - フロントエンド側は **TypeScript**
+
+### プラグイン側のモジュール連携
+
+- ローカルモジュール間の連携は **`<script>` タグの読み込み + グローバルの `ME` 名前空間** で行う
+  （`ME.logger` / `ME.settings` / `ME.server` のように、1 ファイル = 1 つのサブオブジェクト）
+- **相対パスの `require('./xxx.js')` は使わない。** レンダラー上の `<script>` から呼んだ場合、
+  解決基準のディレクトリが保証されないため。`require()` は Node.js 標準モジュール
+  （`fs` / `http` / `os` 等）と `node_modules` のパッケージにのみ使う
+- `index.html` の `<script>` は依存順に並べる（`logger` → `settings` → `server` → 機能モジュール → `main`）
+- 後から読み込まれるモジュールへの参照は、使う時点で存在確認する（例: `if (ME.static) { ... }`）
 - `var` は使わない。再代入しないものは `const`
 - 非同期処理は `async` / `await`。`.then()` チェーンは使わない
 - `==` ではなく `===`

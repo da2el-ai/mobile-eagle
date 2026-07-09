@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Mobile Eagle</title>
+  <style>
+    /* ステータスウィンドウの仮スタイル。本実装はウィンドウUIの仕様で作り直す */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      font-size: 13px;
+      color: #e4e4e4;
+      background: #1e1e1e;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    #status {
+      margin-bottom: 12px;
+      font-family: Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #8fdc8f;
+    }
+
+    #log {
+      width: 100%;
+      height: calc(100vh - 90px);
+      padding: 8px;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      background: #161616;
+      color: #d0d0d0;
+      font-family: Menlo, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      resize: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mobile Eagle</h1>
+  <div id="status">-</div>
+  <textarea id="log" readonly></textarea>
+
+  <!-- モジュールは ME 名前空間で連携する。読み込み順に依存があるため注意 -->
+  <script src="js/logger.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/server.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
