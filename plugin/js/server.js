@@ -71,6 +71,18 @@ ME.server = (() => {
     });
   }
 
+  /**
+   * 例外から HTTP ステータスコードを決める。
+   * ハンドラが badRequest() などで statusCode を付けていればそれを使う。
+   * @param {Error} err
+   */
+  function statusCodeOf(err) {
+    if (err.statusCode) return err.statusCode;
+    // ENOENT は外部ボリューム切断などでファイル実体が消えた場合に出る
+    if (err.code === 'ENOENT' || /見つかりません/.test(err.message || '')) return 404;
+    return 500;
+  }
+
   /** リクエスト1件を処理する */
   function handleRequest(req, res) {
     // クエリ・ハッシュを除いたパスに正規化する
@@ -97,10 +109,7 @@ ME.server = (() => {
           .catch((err) => {
             ME.logger.error(`ハンドラでエラー: ${req.method} ${pathname}`, err);
             if (!res.headersSent) {
-              // 存在しないリソースは 404、それ以外の失敗は 500。
-              // ENOENT は外部ボリューム切断などでファイル実体が消えた場合に出る
-              const isNotFound = err.code === 'ENOENT' || /見つかりません/.test(err.message || '');
-              sendJson(res, isNotFound ? 404 : 500, {
+              sendJson(res, statusCodeOf(err), {
                 status: 'error',
                 message: err.message || 'Internal Server Error',
               });
@@ -147,6 +156,16 @@ ME.server = (() => {
 
     /** sendJson を他モジュールにも公開する */
     sendJson,
+
+    /**
+     * 400 Bad Request として扱う例外を作る。
+     * @param {string} message
+     */
+    badRequest(message) {
+      const err = new Error(message);
+      err.statusCode = 400;
+      return err;
+    },
 
     /**
      * サーバーを 0.0.0.0 で起動する。

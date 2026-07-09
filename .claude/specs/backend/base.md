@@ -348,8 +348,8 @@ UI 変更なし（ステータスウィンドウの UI は別仕様）。
 > 大きい画像が JPEG 圧縮され、2 回目のアクセスがキャッシュから返る（ログで確認）
 > → ユーザーがチェック → `/step-commit` でコミット
 
-- [ ] 9. `POST /api/eagle/update` を実装する
-- [ ] 10. プラグイン API の削除手段（`item.moveToTrash()` 等）を実機確認し、
+- [x] 9. `POST /api/eagle/update` を実装する
+- [x] 10. プラグイン API の削除手段（`item.moveToTrash()` 等）を実機確認し、
   `POST /api/eagle/move_to_trash` を実装する
 
 > 📌 **コミットポイント 5** — ⭐評価の変更とゴミ箱への移動が Eagle 本体に反映される。

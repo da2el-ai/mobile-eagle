@@ -41,6 +41,47 @@ ME.apiEagle = (() => {
     res.end(buffer);
   }
 
+  /** リクエストボディの上限。これを超えたら受け取らない（メモリ枯渇の防止） */
+  const MAX_BODY_BYTES = 1024 * 1024;
+
+  /**
+   * POST の JSON ボディを読み取る。
+   * @param {http.IncomingMessage} req
+   * @returns {Promise<object>}
+   */
+  function readJsonBody(req) {
+    return new Promise((resolve, reject) => {
+      const chunks = [];
+      let size = 0;
+
+      req.on('data', (chunk) => {
+        size += chunk.length;
+        if (size > MAX_BODY_BYTES) {
+          // ここで req.destroy() すると 400 を返す前にソケットが切れ、
+          // クライアントに理由が伝わらない。読み取りを止めるだけにする
+          req.pause();
+          reject(ME.server.badRequest('リクエストボディが大きすぎます'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+
+      req.on('error', reject);
+
+      req.on('end', () => {
+        if (chunks.length === 0) {
+          resolve({});
+          return;
+        }
+        try {
+          resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+        } catch (err) {
+          reject(ME.server.badRequest('リクエストボディが不正な JSON です'));
+        }
+      });
+    });
+  }
+
   return {
     register() {
       // 画像一覧
@@ -88,6 +129,32 @@ ME.apiEagle = (() => {
 
         const { buffer, contentType } = await ME.image.load(item.filePath, maxFileSize, quality);
         sendBinary(res, buffer, contentType);
+      });
+
+      // アイテム更新（⭐評価・タグ・注釈・URL）
+      ME.server.addRoute('POST', `${PREFIX}/update`, async (req, res) => {
+        const body = await readJsonBody(req);
+        if (!body.id) throw ME.server.badRequest('id が指定されていません');
+
+        // 送られてきたプロパティだけを更新する（undefined は触らない）
+        await ME.eagleAdapter.updateItem(body.id, {
+          tags: body.tags,
+          annotation: body.annotation,
+          url: body.url,
+          star: body.star,
+        });
+        ME.server.sendJson(res, 200, { status: 'success' }, req);
+      });
+
+      // ゴミ箱へ移動
+      ME.server.addRoute('POST', `${PREFIX}/move_to_trash`, async (req, res) => {
+        const body = await readJsonBody(req);
+        if (!Array.isArray(body.itemIds) || body.itemIds.length === 0) {
+          throw ME.server.badRequest('itemIds が指定されていません');
+        }
+
+        await ME.eagleAdapter.moveToTrash(body.itemIds);
+        ME.server.sendJson(res, 200, { status: 'success' }, req);
       });
 
       ME.logger.log(`${PREFIX} のエンドポイントを登録しました`);

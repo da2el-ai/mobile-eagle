@@ -150,6 +150,7 @@ ME.eagleAdapter = (() => {
      * @param {string} id
      */
     async getItemById(id) {
+      if (!id) throw ME.server.badRequest('id が指定されていません');
       const item = await eagle.item.getById(id);
       if (!item) throw new Error(`アイテムが見つかりません: ${id}`);
       return item;

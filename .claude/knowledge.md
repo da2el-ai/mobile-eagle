@@ -74,6 +74,10 @@ item のメソッドは `addComment` / `moveToTrash` / `open` / `refreshThumbnai
 削除のために Web API（`localhost:41595`）へフォールバックする必要はない。
 **ただしゴミ箱への「移動」ができるだけで、ゴミ箱の中身は依然として取得できない。**
 
+実機で確認した挙動：`await item.moveToTrash()` の後、そのアイテムは `eagle.item.get({})` の
+結果から消える。**`eagle.item.getById(id)` も null を返すようになる**（ゴミ箱のアイテムは
+ID を知っていても取得できない）。
+
 ### ゴミ箱内のアイテムは取得できない
 
 `isDeleted` プロパティは存在するが**常に `false`**。検索条件 `get({isDeleted: true})` は
@@ -114,6 +118,18 @@ JPEG は透過を持てない。`OffscreenCanvas` は初期状態が透明なの
 
 パッキングするとプラグインフォルダの中身ごとアーカイブされ、インストール後も
 プラグインフォルダから読み出して HTTP 配信できる。パッキング前後で挙動は変わらない。
+
+---
+
+## HTTP サーバー
+
+### ボディサイズ超過で `req.destroy()` を呼ぶと 400 が届かない
+
+`req.on('data')` の中でサイズ上限を超えたときに `req.destroy()` すると、
+**レスポンスを書き込む前にソケットが閉じる**ため、クライアントには
+「400 Bad Request」ではなく接続エラー（`UND_ERR_SOCKET` / `other side closed`）が届く。
+
+`req.pause()` で読み取りだけ止めて reject し、通常のエラー経路で 400 を返す。
 
 ---
 
