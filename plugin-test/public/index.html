@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mobile Eagle Test - 静的配信テスト</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main class="app">
+    <h1>静的ファイル配信テスト</h1>
+
+    <p class="status" id="status">JavaScript 読み込み中…</p>
+
+    <div class="counter">
+      <div class="count" id="count">0</div>
+      <button type="button" id="btn-count" class="btn">カウントアップ</button>
+      <button type="button" id="btn-reset" class="btn btn-sub">リセット</button>
+    </div>
+
+    <section class="info">
+      <h2>配信元の情報</h2>
+      <dl>
+        <dt>接続先</dt>
+        <dd id="info-host">-</dd>
+        <dt>サーバー応答（/ping）</dt>
+        <dd id="info-ping">取得中…</dd>
+      </dl>
+    </section>
+
+    <p class="note">
+      このページが表示され、ボタンで数字が増え、CSSが効いていれば<br>
+      HTML / CSS / JavaScript の配信は成功しています。
+    </p>
+  </main>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

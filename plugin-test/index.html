@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Mobile Eagle Test</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <h1>Mobile Eagle Test</h1>
+    <div class="instance-info">
+      インスタンスID: <code id="instance-id">-</code> / 起動: <code id="started-at">-</code>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- ログ（全テスト共通） -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>ログ</h2>
+        <button type="button" id="btn-clear-log" class="btn btn-sub">クリア</button>
+      </div>
+      <textarea id="log" class="log" readonly></textarea>
+    </section>
+
+    <!-- T1 -->
+    <section class="panel">
+      <h2>T1. ライフサイクル・二重起動確認</h2>
+      <p class="desc">
+        Eagle を再起動 → 自動起動を確認。プラグインパネルからクリック → インスタンスIDが変わらないことを確認。
+        イベントは自動でログに記録されます。
+      </p>
+      <div class="row">
+        <button type="button" id="btn-t1-hide" class="btn">ウィンドウを隠す（hide）</button>
+      </div>
+      <div class="result" id="t1-result">イベント受信数: onPluginCreate=0 / onPluginRun=0 / onPluginShow=0 / onPluginHide=0</div>
+    </section>
+
+    <!-- T2 -->
+    <section class="panel">
+      <h2>T2. 非表示中のダイアログ・通知の挙動</h2>
+      <p class="desc">
+        ボタンを押してから <strong>10秒後</strong> に実行されます。押したらすぐウィンドウを隠して挙動を観察してください。
+      </p>
+      <div class="row">
+        <button type="button" id="btn-t2-alert" class="btn">alert()</button>
+        <button type="button" id="btn-t2-messagebox" class="btn">showMessageBox()</button>
+        <button type="button" id="btn-t2-notification" class="btn">notification.show()</button>
+      </div>
+      <div class="result" id="t2-result">未実行</div>
+    </section>
+
+    <!-- T3 -->
+    <section class="panel">
+      <h2>T3. HTTPサーバー・外部アクセス</h2>
+      <div class="row">
+        <label for="t3-port">ポート</label>
+        <input type="number" id="t3-port" class="input-num" value="8000" min="1" max="65535">
+        <button type="button" id="btn-t3-start" class="btn">起動</button>
+        <button type="button" id="btn-t3-stop" class="btn btn-sub">停止</button>
+      </div>
+      <div class="row">
+        <label for="t3-ip">IPアドレス</label>
+        <select id="t3-ip" class="select"></select>
+        <button type="button" id="btn-t3-reload-ip" class="btn btn-sub">再取得</button>
+      </div>
+      <div class="result" id="t3-result">サーバー停止中</div>
+    </section>
+
+    <!-- T4 -->
+    <section class="panel">
+      <h2>T4. npmモジュール（qrcode）</h2>
+      <p class="desc">T3で選択中のIP・ポートからURLを組み立ててQRコード化します。</p>
+      <div class="row">
+        <button type="button" id="btn-t4-qr" class="btn">QRコード生成</button>
+      </div>
+      <div class="result" id="t4-result">未実行</div>
+      <div class="qr-area"><img id="t4-qr-img" alt="" hidden></div>
+    </section>
+
+    <!-- T5 -->
+    <section class="panel">
+      <h2>T5. Canvas によるリサイズ・JPEG圧縮</h2>
+      <p class="desc">
+        ライブラリ内の <code>.webp</code> をサイズ降順で取得し、長辺2048pxにリサイズ → JPEG（品質85）へ変換します。
+        通常Canvas と OffscreenCanvas の両方で計測します。
+      </p>
+      <div class="row">
+        <label for="t5-count">件数</label>
+        <input type="number" id="t5-count" class="input-num" value="5" min="1" max="20">
+        <button type="button" id="btn-t5-run" class="btn">実行</button>
+      </div>
+      <div class="result" id="t5-result">未実行</div>
+      <div class="thumbs" id="t5-thumbs"></div>
+    </section>
+
+    <!-- T6 -->
+    <section class="panel">
+      <h2>T6. ゴミ箱アイテムの取得・フォルダ移動</h2>
+      <p class="desc">
+        フォルダ移動テストは <strong>Eagle 本体で対象アイテムを選択</strong> してから実行してください。
+        移動先は下のフォルダ一覧から選びます。
+      </p>
+      <div class="row">
+        <button type="button" id="btn-t6-trash" class="btn">ゴミ箱取得テスト</button>
+      </div>
+      <div class="result" id="t6-trash-result">未実行</div>
+      <div class="row">
+        <label for="t6-folder">移動先</label>
+        <select id="t6-folder" class="select"></select>
+        <button type="button" id="btn-t6-reload-folder" class="btn btn-sub">再取得</button>
+        <button type="button" id="btn-t6-move" class="btn">選択中アイテムを移動</button>
+      </div>
+      <div class="result" id="t6-move-result">未実行</div>
+    </section>
+
+    <!-- T7 -->
+    <section class="panel">
+      <h2>T7. ライブラリ切り替え</h2>
+      <p class="desc">Eagle でライブラリを切り替えると <code>onLibraryChanged</code> がログに記録されます。切り替え後に下のボタンで疎通確認してください。</p>
+      <div class="row">
+        <button type="button" id="btn-t7-check" class="btn">切り替え後の動作確認（/ping + item.get）</button>
+      </div>
+      <div class="result" id="t7-result">未実行</div>
+    </section>
+
+    <!-- T8 -->
+    <section class="panel">
+      <h2>T8. 静的ファイル配信（HTML / CSS / JS）</h2>
+      <p class="desc">
+        プラグインフォルダ内の <code>public/</code> をHTTPサーバーから配信します。
+        スマホで配信URLを開き、カウントアップが動作するか確認してください。
+      </p>
+      <div class="row">
+        <button type="button" id="btn-t8-check" class="btn">配信元を確認</button>
+        <button type="button" id="btn-t8-open" class="btn btn-sub">ブラウザで開く</button>
+      </div>
+      <div class="result" id="t8-result">未実行</div>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

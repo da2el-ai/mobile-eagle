@@ -1,0 +1,19 @@
+{
+  "id": "MOBILE_EAGLE_TEST",
+  "version": "0.1.0",
+  "platform": "all",
+  "arch": "all",
+  "name": "Mobile Eagle Test",
+  "logo": "logo.png",
+  "keywords": ["test", "mobile", "server"],
+  "devTools": true,
+  "main": {
+    "url": "index.html",
+    "serviceMode": true,
+    "width": 720,
+    "height": 900,
+    "minWidth": 480,
+    "minHeight": 520,
+    "backgroundColor": "#1e1e1e"
+  }
+}

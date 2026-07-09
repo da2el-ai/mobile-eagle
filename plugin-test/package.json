@@ -1,0 +1,9 @@
+{
+  "name": "mobile-eagle-test",
+  "version": "0.1.0",
+  "description": "Mobile Eagle の要検証事項を確認するためのテスト用 Eagle プラグイン",
+  "private": true,
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

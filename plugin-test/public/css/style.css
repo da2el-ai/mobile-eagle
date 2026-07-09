@@ -1,0 +1,115 @@
+/* 静的配信テスト用のスタイル。CSSが適用されているかを目視で判別しやすくする */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  line-height: 1.7;
+  color: #f0f0f0;
+  /* グラデーションが出ていればCSSが読めている証拠になる */
+  background: linear-gradient(160deg, #1b2735 0%, #2c5364 100%);
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.status {
+  margin: 0 0 24px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+}
+
+.status.ok {
+  background: rgba(120, 220, 120, 0.2);
+  color: #b6f5b6;
+}
+
+.counter {
+  padding: 24px 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.count {
+  margin-bottom: 16px;
+  font-size: 64px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #7cc4ff;
+}
+
+.btn {
+  min-width: 140px;
+  min-height: 48px;
+  margin: 4px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #7cc4ff;
+  color: #10202e;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  /* スマホでのタップ挙動を確認する */
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-sub {
+  background: rgba(255, 255, 255, 0.16);
+  color: #f0f0f0;
+}
+
+.info {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  text-align: left;
+}
+
+.info h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #9fd6ff;
+}
+
+.info dl {
+  margin: 0;
+  font-size: 12px;
+}
+
+.info dt {
+  color: #9aa8b4;
+}
+
+.info dd {
+  margin: 0 0 8px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  word-break: break-all;
+}
+
+.note {
+  margin-top: 24px;
+  font-size: 12px;
+  color: #a8b6c2;
+}
