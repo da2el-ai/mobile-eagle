@@ -69,20 +69,6 @@
     }
   });
 
-  // ステータスウィンドウ（仮）: ログを流すだけ
-  document.addEventListener('DOMContentLoaded', () => {
-    const logEl = document.getElementById('log');
-    const statusEl = document.getElementById('status');
-
-    const render = () => {
-      logEl.value = ME.logger.getLines().join('\n');
-      const settings = ME.settings.getAll();
-      statusEl.textContent = ME.server.isRunning()
-        ? `サーバー稼働中 0.0.0.0:${settings.port}`
-        : 'サーバー停止中';
-    };
-
-    ME.logger.subscribe(render);
-    render();
-  });
+  // ステータスウィンドウの UI は status-window.js（ME.statusWindow）が担う。
+  // 初期化は status-window.js 側の DOMContentLoaded で行う（backend/status-window.md 5 章）。
 })();

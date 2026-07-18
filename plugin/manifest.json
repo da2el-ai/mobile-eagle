@@ -10,10 +10,10 @@
   "main": {
     "url": "index.html",
     "serviceMode": true,
-    "width": 720,
-    "height": 900,
-    "minWidth": 480,
+    "width": 520,
+    "height": 660,
+    "minWidth": 420,
     "minHeight": 520,
-    "backgroundColor": "#1e1e1e"
+    "backgroundColor": "#232729"
   }
 }

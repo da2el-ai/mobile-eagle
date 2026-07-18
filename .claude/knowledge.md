@@ -22,6 +22,18 @@
 
 → 検証ログ：[specs/plugin-test.md](specs/plugin-test.md) の T1
 
+### `DOMContentLoaded` は `onPluginCreate` の非同期処理完了を待たない
+
+ステータスウィンドウの UI 初期化を `DOMContentLoaded` で行うと、その時点では
+`onPluginCreate` 内の `await ME.server.start()` がまだ完了していないことがある
+（両者の発火順序は保証されない）。この状態で `ME.server.isRunning()` を読むと `false` が返り、
+**「サーバーは自動起動しているのに、トグルは OFF のまま固定」**になる（実機で発生）。
+
+**回避策**：サーバーの起動/停止は必ずログ（`ME.logger`）を伴うので、`ME.logger.subscribe()` の
+コールバックで `isRunning()` の変化を監視し、変化時に状態表示・QR を更新する。
+`init` 時のスナップショットだけに頼らないこと。状態変化のたびに毎回 QR を作り直さないよう、
+前回の稼働状態を覚えておき**変化時のみ**再描画する。
+
 ### `eagle.item.get()` に `orderBy` / `limit` / `offset` は存在しない
 
 Eagle Web API（`localhost:41595`）にはあるが、プラグイン API にはない。

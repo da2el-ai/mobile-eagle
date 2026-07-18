@@ -239,7 +239,7 @@ Claude Design モック（`.claude/design/` の `Eagle Server.dc.html`）を素 
 
 前提: backend/base.md 完成済み（`ME.server` / `ME.settings` / `ME.logger` が動作）。
 
-- [ ] 1. `plugin/js/status-window.js`（`ME.statusWindow`）を新設し、IP 列挙
+- [x] 1. `plugin/js/status-window.js`（`ME.statusWindow`）を新設し、IP 列挙
   （`listIpAddresses()` のロジック流用・ラベルなし）と QR 生成（`generateQrCode()` のロジック流用）を
   実装する。`plugin/index.html` を本実装のマークアップに差し替え、**`status-window.js` を
   読み込み順（`logger`→`settings`→`server`→…→`main` の間。coding.md）に `<script>` 追加**する。
@@ -250,7 +250,7 @@ Claude Design モック（`.claude/design/` の `Eagle Server.dc.html`）を素 
 > QR コードが表示される。QR をスマホで読むとアクセスできる（サーバー稼働中）
 > → ユーザーがチェック → `/step-commit` でコミット
 
-- [ ] 2. サーバー ON/OFF トグル（4.1・即時）を結線する。**共通の保存ボタン（4.8）**を実装し、
+- [x] 2. サーバー ON/OFF トグル（4.1・即時）を結線する。**共通の保存ボタン（4.8）**を実装し、
   IP・ポート・パスワードの一括保存・ポート変更時の再起動・QR 再生成・`serverEnabled` の保存を
   行う。起動時の `selectedIp` 復元・未出現リトライ・IP 不在時のウィンドウ表示（5 章・9 章）も実装する
 
