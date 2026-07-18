@@ -24,4 +24,13 @@ export default {
   grid: {
     empty: '表示する画像がありません',
   },
+  auth: {
+    title: '認証',
+    placeholder: 'パスワードを入力',
+    error: 'パスワードが間違っています',
+  },
+  connection: {
+    error: 'サーバーに接続できません',
+    retry: '再試行',
+  },
 };

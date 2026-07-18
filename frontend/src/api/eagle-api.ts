@@ -18,6 +18,13 @@ export function errorMessage(e: unknown): string {
   return e instanceof Error && e.message ? e.message : '通信に失敗しました';
 }
 
+// 401 共通処理のハンドラ（auth store が登録し、認証ダイアログの再表示につなげる。auth.md 5 章）。
+// checkAuth/login は requestJson を通さないため、この共通処理の対象外。
+let onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(handler: () => void): void {
+  onUnauthorized = handler;
+}
+
 // レスポンスの共通形。status と（一覧・フォルダは）data を持つ。
 interface ApiResponse<T> {
   status: string;
@@ -38,8 +45,11 @@ async function requestJson<T extends ApiResponse<unknown>>(
 ): Promise<T> {
   const res = await fetch(url, init);
 
-  // 401 は共通処理（auth.md 5 章）。ボディに関係なく専用エラーにする。
-  if (res.status === 401) throw new UnauthorizedError();
+  // 401 は共通処理（auth.md 5 章）。登録ハンドラ（ダイアログ再表示）を呼び、専用エラーを投げる。
+  if (res.status === 401) {
+    if (onUnauthorized) onUnauthorized();
+    throw new UnauthorizedError();
+  }
 
   let data: T | null = null;
   try {
@@ -146,4 +156,31 @@ export function imageUrl(id: string): string {
     quality: String(effectiveQuality()),
   });
   return `${API_BASE_URL}/get_image?${query}`;
+}
+
+// 認証（auth.md）。ベースパスは /api/auth（/api/eagle とは別系統）。
+// これらは requestJson を通さないため 401 共通処理の対象外（login の 401 はダイアログ内で処理する）。
+export interface AuthCheck {
+  authRequired: boolean;
+  authenticated: boolean;
+}
+
+// 認証状態を確認する（起動時。認証不要）。
+export async function checkAuth(): Promise<AuthCheck> {
+  const res = await fetch('/api/auth/check');
+  if (!res.ok) throw new Error(`認証確認に失敗しました（HTTP ${res.status}）`);
+  const data = await res.json();
+  return { authRequired: !!data.authRequired, authenticated: !!data.authenticated };
+}
+
+// パスワードでログインする。true=成功 / false=パスワード不一致（401）。それ以外の失敗は throw。
+export async function login(password: string): Promise<boolean> {
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+  if (res.status === 401) return false;
+  if (!res.ok) throw new Error(`ログインに失敗しました（HTTP ${res.status}）`);
+  return true;
 }

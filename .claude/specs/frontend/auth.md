@@ -73,9 +73,11 @@
 
 前提: frontend/base.md コミットポイント base-2 完了。backend/auth.md と同時に実装する。
 
-- [ ] 1. バックエンド認証（backend/auth.md ステップ 1〜2）を実装する
-- [ ] 2. `auth` store・起動フロー・認証ダイアログを実装する
-- [ ] 3. API クライアントの 401 共通処理と再初期化を実装する
+- [x] 1. バックエンド認証（backend/auth.md ステップ 1〜2）を実装する
+- [x] 2. `auth` store・起動フロー・認証ダイアログを実装する
+- [x] 3. API クライアントの 401 共通処理と再初期化を実装する
+  （再初期化のうちフォルダ・一覧の再取得は grid 未実装のため App.vue の `TODO(grid)` で土台のみ。
+   grid.md 実装時に接続する）
 
 > 📌 **コミットポイント auth-1** —
 > curl（Cookie 無し）で `/api/eagle/list` が 401、login で得た Cookie 付きなら 200、

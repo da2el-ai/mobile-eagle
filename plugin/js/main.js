@@ -29,8 +29,10 @@
       isBootstrapping = false;
     }, BOOTSTRAP_GRACE_MS);
 
-    // API のルートを登録してからサーバーを起動する
+    // API のルートを登録してからサーバーを起動する。
+    // auth は前段フックを差し込むため api の後に登録する（保護対象 /api/eagle/* を守る）
     ME.apiEagle.register();
+    ME.auth.register();
 
     // 前回の設定を復元し、サーバーONなら自動起動する
     const settings = ME.settings.getAll();

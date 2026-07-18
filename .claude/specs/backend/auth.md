@@ -95,8 +95,8 @@
 前提: frontend/base.md のコミットポイント base-2（API クライアント）まで完了。
 frontend/auth.md と同じマイルストーンで実装する。
 
-- [ ] 1. `auth.js`（トークン生成・Cookie 検証・localhost 判定）と前段フックへの結線
-- [ ] 2. `/api/auth/check` / `/api/auth/login` の実装
+- [x] 1. `auth.js`（トークン生成・Cookie 検証・localhost 判定）と前段フックへの結線
+- [x] 2. `/api/auth/check` / `/api/auth/login` の実装
 
 > 📌 コミットポイントは frontend/auth.md 側（auth-1）に統合する（フロントのダイアログと
 > 合わせて動作確認するため）。curl での単体確認: パスワード設定時に Cookie 無しの

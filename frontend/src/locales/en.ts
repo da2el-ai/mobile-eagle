@@ -24,4 +24,13 @@ export default {
   grid: {
     empty: 'No images to show',
   },
+  auth: {
+    title: 'Authentication',
+    placeholder: 'Enter password',
+    error: 'Incorrect password',
+  },
+  connection: {
+    error: 'Cannot connect to the server',
+    retry: 'Retry',
+  },
 };
