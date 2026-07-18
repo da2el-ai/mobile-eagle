@@ -36,11 +36,11 @@ Simple Eagle と互換にする。**
 - Eagle API の実挙動: [.claude/specs/plugin-test.md](../plugin-test.md)
 - 実装知見: [.claude/knowledge.md](../../knowledge.md)
 - 移植元:
-  - `/Volumes/D/works/simple-eagle/index.py`（エンドポイント定義）
-  - `/Volumes/D/works/simple-eagle/modules/eagle_api.py`（Eagle Web API 呼び出し）
-  - `/Volumes/D/works/simple-eagle/modules/util.py`（画像圧縮・キャッシュ）
-  - `/Volumes/D/works/simple-eagle/src/js/composables/useEagleApi.ts`（フロントが期待するインターフェース）
-  - `/Volumes/D/works/simple-eagle/src/js/types.ts`（`TImageItem` / `TFolderItem`）
+  - `~/work/AI/Eagle関連/simple-eagle/index.py`（エンドポイント定義）
+  - `~/work/AI/Eagle関連/simple-eagle/modules/eagle_api.py`（Eagle Web API 呼び出し）
+  - `~/work/AI/Eagle関連/simple-eagle/modules/util.py`（画像圧縮・キャッシュ）
+  - `~/work/AI/Eagle関連/simple-eagle/src/js/composables/useEagleApi.ts`（フロントが期待するインターフェース）
+  - `~/work/AI/Eagle関連/simple-eagle/src/js/types.ts`（`TImageItem` / `TFolderItem`）
 - 流用できる検証済みコード: `plugin-test/js/main.js` の
   `startServer()` / `serveStatic()` / `resolvePluginRoot()` / `compressItem()` / `isBootstrapping`
 

@@ -57,7 +57,7 @@ Mobile Eagle は、画像管理アプリ Eagle をスマートフォンから閲
 
 - 仕様書が既存実装と乖離していないか（Grep で関連シンボルを実装側コードと突き合わせる）
 - 検証用プラグイン `plugin-test/` に流用できるコードがあるのに、仕様書が別の方式を提案していないか
-- 移植元の Simple Eagle（`/Volumes/D/works/simple-eagle`）の挙動と変わる場合、その理由が書かれているか
+- 移植元の Simple Eagle（`~/work/AI/Eagle関連/simple-eagle`）の挙動と変わる場合、その理由が書かれているか
 
 ### 6. 実装ステップとコミット推奨タイミング
 

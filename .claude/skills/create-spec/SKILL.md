@@ -47,7 +47,7 @@ description: 大きな機能の実装に着手する前に、その機能の詳�
 
 ### 3. 移植元の確認
 
-- 移植元の **Simple Eagle `/Volumes/D/works/simple-eagle`** の該当箇所を参照し、
+- 移植元の **Simple Eagle `~/work/AI/Eagle関連/simple-eagle`** の該当箇所を参照し、
   再現すべき挙動・API のインターフェースを把握する。
   - バックエンド：`index.py` / `modules/eagle_api.py` / `modules/util.py`
   - フロントエンド：`src/js/`（Vue 3 + TypeScript + Pinia + Tailwind）

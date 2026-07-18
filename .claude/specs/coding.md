@@ -5,7 +5,7 @@ Mobile Eagle（Eagle プラグイン）のコーディング規約。
 ## 1. 基本方針
 
 - **検証済みの事実に基づいて書く。** Eagle Plugin API はドキュメントと実挙動が食い違う箇所がある（[plugin-test.md](plugin-test.md) 参照）。推測で実装せず、疑わしい場合は最小コードで確認する
-- **Simple Eagle（`/Volumes/D/works/simple-eagle`）からの移植** が基本。挙動を変える場合は理由を明記する
+- **Simple Eagle（`~/work/AI/Eagle関連/simple-eagle`）からの移植** が基本。挙動を変える場合は理由を明記する
 - 分からないことは勝手に推測せず、ユーザーに確認する
 
 ## 2. 共通ルール

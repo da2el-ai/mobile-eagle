@@ -47,5 +47,5 @@ CLI アプリだった前身「Simple Eagle」を、導入の敷居を下げる�
 
 ## 参考
 
-- 移植元 Simple Eagle：`/Volumes/D/works/simple-eagle`
+- 移植元 Simple Eagle：`~/work/AI/Eagle関連/simple-eagle`
 - Eagle Plugin API：https://developer.eagle.cool/plugin-api/ja-jp
