@@ -168,6 +168,16 @@ ME.server = (() => {
     },
 
     /**
+     * 404 Not Found として扱う例外を作る。
+     * @param {string} message
+     */
+    notFound(message) {
+      const err = new Error(message);
+      err.statusCode = 404;
+      return err;
+    },
+
+    /**
      * サーバーを 0.0.0.0 で起動する。
      * @param {number} port
      * @returns {Promise<void>} 起動失敗時は reject（EADDRINUSE 等）

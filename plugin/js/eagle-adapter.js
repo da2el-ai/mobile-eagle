@@ -79,7 +79,9 @@ ME.eagleAdapter = (() => {
   function buildCondition(params) {
     const condition = {};
 
-    if (params.ext) condition.ext = params.ext;
+    // ext はプラグイン API の condition には渡さず、JS 側でフィルタする（getItems）。
+    // 検証済みなのは単一値の挙動のみで、複数値指定は未検証のため
+    // （keyword が黙って無視された前例があり、未検証の値はプラグイン API に渡さない）
 
     // keyword（単数）はプラグイン API では無視されるため keywords（配列）に変換する
     if (params.keyword) condition.keywords = [params.keyword];
@@ -89,7 +91,9 @@ ME.eagleAdapter = (() => {
       if (tags.length > 0) condition.tags = tags;
     }
 
-    if (params.folders) {
+    // folders=uncategorized は「未分類」の仮想指定。プラグイン API に該当概念が無いため
+    // condition には渡さず、全件取得後に JS 側で folders 空のアイテムだけ絞り込む（getItems）
+    if (params.folders && params.folders !== 'uncategorized') {
       const folders = params.folders.split(',').map((s) => s.trim()).filter(Boolean);
       if (folders.length > 0) condition.folders = folders;
     }
@@ -105,13 +109,38 @@ ME.eagleAdapter = (() => {
      * プラグイン API に orderBy / limit / offset が無いため、
      * 並べ替えとページングは取得後に JS 側で行う。
      *
-     * @param {object} params { limit, offset, keyword, ext, tags, folders }
+     * @param {object} params { limit, offset, keyword, ext, tags, stars, folders }
      *   offset は「ページ番号」であり、アイテム数ではない（Simple Eagle と同じ仕様）
+     *   ext / stars はカンマ区切りの複数値可。folders=uncategorized は未分類を表す
      * @returns {Promise<object[]>} TImageItem 互換の配列
      */
     async getItems(params) {
       const condition = buildCondition(params);
-      const items = await eagle.item.get(condition);
+      let items = await eagle.item.get(condition);
+
+      // folders=uncategorized: どのフォルダにも属さないアイテムだけ残す
+      // （プラグイン API に「未分類」の概念が無いため JS 側で絞り込む）
+      if (params.folders === 'uncategorized') {
+        items = items.filter((item) => (item.folders || []).length === 0);
+      }
+
+      // ext フィルタ（カンマ区切りの複数値対応）。
+      // eagle.item.get() には渡さず JS 側で絞り込む（複数値が未検証のため）
+      if (params.ext) {
+        const exts = params.ext.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+        if (exts.length > 0) {
+          items = items.filter((item) => exts.includes((item.ext || '').toLowerCase()));
+        }
+      }
+
+      // stars フィルタ（カンマ区切りの整数 0〜5）。star 未設定は 0 として扱う
+      if (params.stars) {
+        const stars = params.stars.split(',').map((s) => Number(s.trim()))
+          .filter((n) => Number.isFinite(n));
+        if (stars.length > 0) {
+          items = items.filter((item) => stars.includes(toInt(item.star)));
+        }
+      }
 
       // 追加日時の降順。プラグイン API のデフォルトも同じ順序だが、
       // 保証された仕様ではないため明示的にソートする
@@ -125,7 +154,8 @@ ME.eagleAdapter = (() => {
     /**
      * フォルダ一覧をツリー構造で取得する。
      * imageCount はプラグイン API に無いため、全アイテムの folders を集計して数える。
-     * @returns {Promise<object[]>} TFolderItem 互換の配列
+     * あわせて拡張子リスト・未分類件数・全件数も同じ走査で集計する。
+     * @returns {Promise<{data: object[], extList: string[], uncategorizedCount: number, totalCount: number}>}
      */
     async getFolders() {
       const [folders, items] = await Promise.all([
@@ -133,16 +163,30 @@ ME.eagleAdapter = (() => {
         eagle.item.get({}),
       ]);
 
-      // フォルダIDごとの直下アイテム数を1回の走査で数える。
+      // フォルダIDごとの直下アイテム数・拡張子リスト・未分類件数を1回の走査で集計する。
       // フォルダごとに get({folders:[id]}) を呼ぶとフォルダ数だけ全件走査が走るため避ける
       const counts = new Map();
+      const extSet = new Set();
+      let uncategorizedCount = 0;
       for (const item of items) {
-        for (const folderId of item.folders || []) {
+        const itemFolders = item.folders || [];
+        for (const folderId of itemFolders) {
           counts.set(folderId, (counts.get(folderId) || 0) + 1);
         }
+        // どのフォルダにも属さないアイテム = 未分類
+        if (itemFolders.length === 0) uncategorizedCount += 1;
+        // 拡張子の重複なしリスト（フィルタ UI の候補に使う）
+        if (item.ext) extSet.add(String(item.ext).toLowerCase());
       }
 
-      return folders.map((folder) => mapFolder(folder, counts));
+      return {
+        data: folders.map((folder) => mapFolder(folder, counts)),
+        // ライブラリ内の拡張子の重複なしリスト（小文字・昇順）
+        extList: Array.from(extSet).sort(),
+        uncategorizedCount,
+        // 全アイテム数。複数フォルダ所属アイテムの二重計上を避けるため件数の合算ではなく実数を使う
+        totalCount: items.length,
+      };
     },
 
     /**
@@ -182,6 +226,34 @@ ME.eagleAdapter = (() => {
         const item = await eagle.item.getById(id);
         if (!item) throw new Error(`アイテムが見つかりません: ${id}`);
         await item.moveToTrash();
+      }
+    },
+
+    /**
+     * アイテムを指定フォルダへ移動する（追加ではなく置換）。
+     * 複数フォルダに属するアイテムは全所属が移動先1つに置き換わる。
+     * @param {string[]} itemIds
+     * @param {string} folderId 実フォルダ ID、または特殊値 'uncategorized'（未分類へ）
+     */
+    async moveToFolder(itemIds, folderId) {
+      // 実フォルダ ID の場合は実在を先に確認する。
+      // 不正な ID で save() するとアイテムがどのフォルダにも表示されなくなるため。
+      // uncategorized は「未分類へ移動」の仮想指定なので確認しない
+      if (folderId !== 'uncategorized') {
+        const folder = await eagle.folder.getById(folderId);
+        if (!folder) throw ME.server.notFound(`フォルダが見つかりません: ${folderId}`);
+      }
+
+      // uncategorized は全フォルダから外す（空配列）。実 ID は 1 つに置き換える
+      const newFolders = folderId === 'uncategorized' ? [] : [folderId];
+
+      // 順次処理のため、途中で失敗すると一部だけ移動済みになり得る（move_to_trash と同じ割り切り）
+      for (const id of itemIds) {
+        const item = await eagle.item.getById(id);
+        if (!item) throw new Error(`アイテムが見つかりません: ${id}`);
+        // 各 item に別の配列インスタンスを渡す（参照の共有を避ける）
+        item.folders = newFolders.slice();
+        await item.save();
       }
     },
   };

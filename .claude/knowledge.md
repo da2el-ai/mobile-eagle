@@ -52,6 +52,16 @@ Simple Eagle は Web API の `keyword`（単数）を使っていたので、移
 二重計上になる。curl で API を直接叩くと子孫を含まない数字が見えるが、これが正しい
 （Web API の `folder/list` と同じ意味）。
 
+### `eagle.folder.getById()` は見つからないと falsy を返す（例外は投げない）
+
+存在しない folderId を渡すと `null`（または `undefined`）が返り、例外は投げられない。
+公式ドキュメントは戻り値を `Promise<Folder>` としか書いておらず、見つからない場合の挙動は未記載。
+フォルダ移動（`POST /move_to_folder`）の移動先実在確認に使うため実機で確認した：
+存在しない ID には 404「フォルダが見つかりません」、実在 ID では移動が成功した。
+
+→ **不正な folderId のまま `item.folders = [folderId]` で `save()` すると、アイテムが
+どのフォルダにも表示されなくなる。** この事前確認（`getById` の falsy 判定）は消さないこと。
+
 ### `item.star` は評価なしのとき `undefined`（0 ではない）
 
 `0` が入っているわけではないので、`item.star || 0` のような正規化が必須。

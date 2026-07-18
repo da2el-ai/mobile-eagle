@@ -92,17 +92,25 @@ ME.apiEagle = (() => {
           // offset はページ番号（アイテム数ではない）。Simple Eagle と同じ仕様
           offset: intParam(query, 'offset', 0),
           keyword: query.keyword,
+          // ext / stars はカンマ区切りの複数値可（JS 側フィルタ）
           ext: query.ext,
+          stars: query.stars,
           tags: query.tags,
           folders: query.folders,
         });
         ME.server.sendJson(res, 200, { status: 'success', data: items }, req);
       });
 
-      // フォルダ一覧
+      // フォルダ一覧（拡張子リスト・未分類件数・全件数も返す）
       ME.server.addRoute('GET', `${PREFIX}/folders`, async (req, res) => {
-        const folders = await ME.eagleAdapter.getFolders();
-        ME.server.sendJson(res, 200, { status: 'success', data: folders }, req);
+        const result = await ME.eagleAdapter.getFolders();
+        ME.server.sendJson(res, 200, {
+          status: 'success',
+          data: result.data,
+          extList: result.extList,
+          uncategorizedCount: result.uncategorizedCount,
+          totalCount: result.totalCount,
+        }, req);
       });
 
       // サムネイル配信
@@ -154,6 +162,21 @@ ME.apiEagle = (() => {
         }
 
         await ME.eagleAdapter.moveToTrash(body.itemIds);
+        ME.server.sendJson(res, 200, { status: 'success' }, req);
+      });
+
+      // フォルダ移動（複数フォルダ所属は移動先1つに置き換わる。追加ではなく置換）
+      ME.server.addRoute('POST', `${PREFIX}/move_to_folder`, async (req, res) => {
+        const body = await readJsonBody(req);
+        if (!Array.isArray(body.itemIds) || body.itemIds.length === 0) {
+          throw ME.server.badRequest('itemIds が指定されていません');
+        }
+        // folderId は実フォルダ ID または特殊値 'uncategorized'。空文字は不正
+        if (!body.folderId) {
+          throw ME.server.badRequest('folderId が指定されていません');
+        }
+
+        await ME.eagleAdapter.moveToFolder(body.itemIds, body.folderId);
         ME.server.sendJson(res, 200, { status: 'success' }, req);
       });
 

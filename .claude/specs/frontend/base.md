@@ -324,8 +324,8 @@ frontend/
 > 引き続き動いている
 > → ユーザーがチェック → `/step-commit` でコミット
 
-- [ ] 3. バックエンド拡張（10 章の 4 点）を実装する
-- [ ] 4. API クライアント（`eagle-api.ts`）と store 群（8 章）を実装する
+- [x] 3. バックエンド拡張（10 章の 4 点）を実装する
+- [x] 4. API クライアント（`eagle-api.ts`）と store 群（8 章）を実装する
 
 > 📌 **コミットポイント base-2** — curl で `stars` / `ext`（複数）/ `folders=uncategorized` /
 > `/folders` の `extList`・`uncategorizedCount`・`totalCount` が確認できる
