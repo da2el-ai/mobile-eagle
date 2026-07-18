@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0" rel="stylesheet">
+<style>
+:root{--bg:#ffffff;--fg:#1a1a1a;--panel:#ffffff;--elev:#f6f6f6;--border:rgba(0,0,0,.10);--muted:#6b7075;--hover:rgba(0,0,0,.05);--thumb:#eceded;--accent:#2f6fed;--scrim:rgba(0,0,0,.42)}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:"Noto Sans JP","Helvetica Neue",Helvetica,Arial,"Hiragino Sans",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent);opacity:.8}
+.ms{font-family:'Material Symbols Outlined';font-weight:400;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';-webkit-font-smoothing:antialiased;user-select:none}
+@keyframes metaIn{from{transform:translateY(100px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes sheetIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes popIn{from{transform:translateY(-12px) scale(.98);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</helmet>
+
+<div style="width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--fg)">
+
+  <header style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 8px;background:var(--bg);border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:2px">
+      <button onClick="{{ onHamburger }}" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--fg);border-radius:9px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:24px">menu</span></button>
+    </div>
+    <div style="display:flex;align-items:center;gap:2px">
+      <button onClick="{{ onFilter }}" style="{{ filterBtnStyle }}" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">filter_alt</span></button>
+      <button onClick="{{ onToggleSelect }}" style="{{ selectBtnStyle }}" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">check_box</span></button>
+      <button onClick="{{ onSettings }}" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--fg);border-radius:9px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">settings</span></button>
+    </div>
+  </header>
+
+  <nav style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;padding:9px 12px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg)">
+    <sc-for list="{{ breadcrumb }}" as="crumb" hint-placeholder-count="2">
+      <sc-if value="{{ crumb.notFirst }}" hint-placeholder-val="{{ true }}"><span class="ms" style="font-size:16px;color:var(--muted);opacity:.6">chevron_right</span></sc-if>
+      <button onClick="{{ crumb.onClick }}" style="{{ crumb.style }}" style-hover="background:var(--hover)">{{ crumb.name }}</button>
+    </sc-for>
+  </nav>
+
+  <main ref="{{ scrollRef }}" onScroll="{{ onScroll }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div style="display:grid;gap:3px;padding:3px;grid-template-columns:{{ gridTemplate }};padding-bottom:120px">
+      <sc-for list="{{ cells }}" as="cell" hint-placeholder-count="12">
+        <div onClick="{{ cell.onClick }}" style="position:relative;cursor:pointer;user-select:none">
+          <div style="position:relative;width:100%;aspect-ratio:1/1;background:var(--thumb);border-radius:6px;overflow:hidden">
+            <img src="{{ cell.src }}" alt="" loading="lazy" style="{{ cell.imgStyle }}">
+            <div style="position:absolute;left:4px;bottom:4px;padding:1px 5px;font-size:9px;font-weight:700;letter-spacing:.3px;color:#fff;background:rgba(0,0,0,.62);border-radius:4px">{{ cell.format }}</div>
+            <sc-if value="{{ cell.showCheck }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;background:rgba(47,111,237,.28);border:2px solid var(--accent);border-radius:6px"></div>
+              <div style="position:absolute;right:5px;top:5px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:var(--accent);border-radius:50%;color:#fff"><span class="ms" style="font-size:16px">check</span></div>
+            </sc-if>
+            <sc-if value="{{ cell.showAnchor }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;background:rgba(47,111,237,.28);border:2px solid var(--accent);border-radius:6px"></div>
+              <div style="position:absolute;right:5px;top:5px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:var(--accent);border-radius:50%;color:#fff;font-size:12px;font-weight:800">A</div>
+            </sc-if>
+          </div>
+          <div style="display:flex;justify-content:center;gap:1px;padding:3px 0 5px;font-size:11px;line-height:1">
+            <sc-for list="{{ cell.stars }}" as="st"><span style="{{ st.style }}">★</span></sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:60px 20px;text-align:center;color:var(--muted);font-size:14px">表示する画像がありません</div>
+    </sc-if>
+  </main>
+
+  <!-- Grid controller -->
+  <sc-if value="{{ showGridCtrl }}" hint-placeholder-val="{{ true }}">
+  <div style="{{ gridCtrlStyle }}">
+    <button onClick="{{ onToggleFit }}" title="表示切替" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--panel);color:var(--fg);border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.14)" style-hover="background:var(--hover)">
+      <sc-if value="{{ isCover }}" hint-placeholder-val="{{ true }}"><span style="width:18px;height:18px;background:var(--fg);border-radius:2px;display:block"></span></sc-if>
+      <sc-if value="{{ isContain }}" hint-placeholder-val="{{ false }}"><span style="position:relative;width:18px;height:18px;display:flex;align-items:center;justify-content:center"><span style="position:absolute;inset:0;background:var(--fg);opacity:.5;border-radius:2px"></span><span style="position:relative;width:6px;height:14px;background:var(--fg);border-radius:1px;display:block"></span></span></sc-if>
+    </button>
+    <div style="display:flex;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.14)">
+      <button onClick="{{ onSizeDown }}" title="小さく" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;border-right:1px solid var(--border);background:transparent;color:var(--fg);cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">remove</span></button>
+      <button onClick="{{ onSizeUp }}" title="大きく" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--fg);cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">add</span></button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Action view (multi-select) -->
+  <sc-if value="{{ selectMode }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:0;bottom:0;width:100vw;height:72px;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px;background:var(--panel);border-top:1px solid var(--border);box-shadow:0 -3px 14px rgba(0,0,0,.12)">
+
+    <sc-if value="{{ actDefault }}" hint-placeholder-val="{{ true }}">
+      <div style="font-size:14px;font-weight:600">{{ selectedCount }} 件選択中</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onClick="{{ onRangeBtn }}" style="height:40px;padding:0 14px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:20px;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:var(--hover)">A→B</button>
+        <button onClick="{{ onRatingBtn }}" style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--elev);color:#f5b301;border-radius:20px;font-size:16px;cursor:pointer" style-hover="background:var(--hover)">★</button>
+        <button onClick="{{ onMoveBtn }}" title="フォルダへ移動" style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:20px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">drive_file_move</span></button>
+        <button onClick="{{ onDeleteBtn }}" style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--elev);color:#e2554b;border-radius:20px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">delete</span></button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ actRange }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:14px;font-weight:600">始点と終点を選んでください</div>
+      <button onClick="{{ onActCancel }}" style="height:40px;padding:0 18px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:20px;font-size:14px;cursor:pointer" style-hover="background:var(--hover)">キャンセル</button>
+    </sc-if>
+
+    <sc-if value="{{ actRating }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:2px;font-size:26px;line-height:1">
+        <sc-for list="{{ actionStars }}" as="st"><span onClick="{{ st.onClick }}" style="{{ st.style }};cursor:pointer">★</span></sc-for>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onClick="{{ onRatingApply }}" style="height:40px;padding:0 16px;border:none;background:var(--accent);color:#fff;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer">実行</button>
+        <button onClick="{{ onActCancel }}" style="height:40px;padding:0 16px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:20px;font-size:14px;cursor:pointer" style-hover="background:var(--hover)">キャンセル</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ actDelete }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:14px;font-weight:600">{{ selectedCount }} 件を削除しますか？</div>
+      <div style="display:flex;gap:8px">
+        <button onClick="{{ onDeleteApply }}" style="height:40px;padding:0 16px;border:none;background:#e2554b;color:#fff;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer">実行</button>
+        <button onClick="{{ onActCancel }}" style="height:40px;padding:0 16px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:20px;font-size:14px;cursor:pointer" style-hover="background:var(--hover)">キャンセル</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ actMove }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:14px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ selectedCount }} 件を「{{ moveTargetName }}」に移動しますか？</div>
+      <div style="display:flex;gap:8px;flex:none">
+        <button onClick="{{ onMoveApply }}" style="height:40px;padding:0 16px;border:none;background:var(--accent);color:#fff;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer">実行</button>
+        <button onClick="{{ onActCancel }}" style="height:40px;padding:0 16px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:20px;font-size:14px;cursor:pointer" style-hover="background:var(--hover)">キャンセル</button>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- Folder tree dialog -->
+  <sc-if value="{{ showTree }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ onCloseTree }}" style="position:fixed;inset:0;z-index:60;background:var(--scrim);animation:fadeIn .15s ease">
+    <div onClick="{{ stop }}" style="position:absolute;left:0;top:0;width:320px;max-width:85vw;height:100vh;background:var(--panel);color:var(--fg);overflow-y:auto;animation:sheetIn .22s cubic-bezier(.2,.8,.2,1);box-shadow:4px 0 24px rgba(0,0,0,.25)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel)">
+        <span style="font-size:15px;font-weight:700">フォルダ</span>
+        <button onClick="{{ onCloseTree }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--fg);border-radius:8px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">close</span></button>
+      </div>
+      <div style="padding:18px">
+        <sc-for list="{{ treeRows }}" as="row" hint-placeholder-count="5">
+          <div style="{{ row.rowStyle }}">
+            <sc-if value="{{ row.hasChildren }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ row.onToggle }}" style="width:26px;height:34px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--muted);cursor:pointer;flex:none"><span class="ms" style="font-size:20px">{{ row.caret }}</span></button>
+            </sc-if>
+            <sc-if value="{{ row.noChildren }}" hint-placeholder-val="{{ false }}"><span style="width:26px;flex:none"></span></sc-if>
+            <button onClick="{{ row.onOpen }}" style="{{ row.labelStyle }}" style-hover="background:var(--hover)">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.name }}</span>
+              <span style="color:var(--muted);font-size:12px;flex:none">{{ row.count }}</span>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Filter dialog -->
+  <sc-if value="{{ showFilter }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ onCloseFilter }}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;background:var(--scrim);animation:fadeIn .15s ease">
+    <div onClick="{{ stop }}" style="width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:var(--panel);color:var(--fg);border-radius:0 0 18px 18px;animation:popIn .22s cubic-bezier(.2,.8,.2,1)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel)">
+        <span style="font-size:16px;font-weight:700">フィルタ</span>
+        <button onClick="{{ onCloseFilter }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--fg);border-radius:8px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">close</span></button>
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">評価</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ ratingOpts }}" as="opt"><button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button></sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">拡張子</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ extOpts }}" as="opt"><button onClick="{{ opt.onClick }}" style="{{ opt.style }}"><sc-if value="{{ opt.on }}" hint-placeholder-val="{{ false }}"><span class="ms" style="font-size:16px">check</span></sc-if>{{ opt.label }}</button></sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">キーワード</label>
+          <input value="{{ draftKeyword }}" onInput="{{ onKeyword }}" placeholder="検索キーワードを入力" style="width:100%;height:44px;padding:0 14px;font-size:16px;color:var(--fg);background:var(--elev);border:1px solid var(--border);border-radius:10px;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">タグ</label>
+          <input value="{{ draftTags }}" onInput="{{ onTags }}" placeholder="タグを「,」区切りで入力" style="width:100%;height:44px;padding:0 14px;font-size:16px;color:var(--fg);background:var(--elev);border:1px solid var(--border);border-radius:10px;outline:none">
+          <span style="font-size:12px;color:var(--muted)">複数のタグを「,」区切りで入力してください</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 18px 20px;position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--border)">
+        <button onClick="{{ onCloseFilter }}" style="height:42px;padding:0 16px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:10px;font-size:14px;cursor:pointer" style-hover="background:var(--hover)">キャンセル</button>
+        <button onClick="{{ onClearFilter }}" style="height:42px;padding:0 16px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:10px;font-size:14px;cursor:pointer" style-hover="background:var(--hover)">フィルタ解除</button>
+        <button onClick="{{ onApplyFilter }}" style="height:42px;padding:0 20px;border:none;background:var(--accent);color:#fff;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">決定</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Settings dialog -->
+  <sc-if value="{{ showSettings }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ onCloseSettings }}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;background:var(--scrim);animation:fadeIn .15s ease">
+    <div onClick="{{ stop }}" style="width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:var(--panel);color:var(--fg);border-radius:0 0 18px 18px;animation:popIn .22s cubic-bezier(.2,.8,.2,1)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel)">
+        <span style="font-size:16px;font-weight:700">設定</span>
+        <button onClick="{{ onCloseSettings }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--fg);border-radius:8px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">close</span></button>
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">テーマ</label>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ themeOpts }}" as="opt"><button onClick="{{ opt.onClick }}" style="{{ opt.style }}"><sc-if value="{{ opt.on }}" hint-placeholder-val="{{ false }}"><span class="ms" style="font-size:16px">check</span></sc-if>{{ opt.label }}</button></sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">自動更新</label>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ autoOpts }}" as="opt"><button onClick="{{ opt.onClick }}" style="{{ opt.style }}"><sc-if value="{{ opt.on }}" hint-placeholder-val="{{ false }}"><span class="ms" style="font-size:16px">check</span></sc-if>{{ opt.label }}</button></sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">自動更新間隔（秒）</label>
+          <input value="{{ autoInterval }}" onInput="{{ onInterval }}" type="number" min="2" max="120" style="width:100%;height:44px;padding:0 14px;font-size:16px;color:var(--fg);background:var(--elev);border:1px solid var(--border);border-radius:10px;outline:none">
+          <span style="font-size:12px;color:var(--muted)">2〜120秒（規定 10 秒）</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">ファイルサイズ上限（KB）</label>
+          <input value="{{ maxSize }}" onInput="{{ onMaxSize }}" type="number" placeholder="768" style="width:100%;height:44px;padding:0 14px;font-size:16px;color:var(--fg);background:var(--elev);border:1px solid var(--border);border-radius:10px;outline:none">
+          <span style="font-size:12px;color:var(--muted)">この値より大きい画像は圧縮して表示します。0 = 圧縮しない / 空欄 = 768</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">JPEG 圧縮率</label>
+          <input value="{{ jpegQuality }}" onInput="{{ onJpeg }}" type="number" min="1" max="100" placeholder="85" style="width:100%;height:44px;padding:0 14px;font-size:16px;color:var(--fg);background:var(--elev);border:1px solid var(--border);border-radius:10px;outline:none">
+          <span style="font-size:12px;color:var(--muted)">空欄 = 85</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Move folder dialog -->
+  <sc-if value="{{ showMove }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ onCloseMove }}" style="position:fixed;inset:0;z-index:70;display:flex;align-items:flex-start;justify-content:center;background:var(--scrim);animation:fadeIn .15s ease">
+    <div onClick="{{ stop }}" style="width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;background:var(--panel);color:var(--fg);border-radius:0 0 18px 18px;animation:popIn .22s cubic-bezier(.2,.8,.2,1)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)">
+        <span style="font-size:16px;font-weight:700">移動先フォルダを選択</span>
+        <button onClick="{{ onCloseMove }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--fg);border-radius:8px;cursor:pointer" style-hover="background:var(--hover)"><span class="ms" style="font-size:22px">close</span></button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:18px">
+        <sc-for list="{{ moveTree }}" as="row" hint-placeholder-count="5">
+          <div style="{{ row.rowStyle }}">
+            <sc-if value="{{ row.hasChildren }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ row.onToggle }}" style="width:26px;height:34px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--muted);cursor:pointer;flex:none"><span class="ms" style="font-size:20px">{{ row.caret }}</span></button>
+            </sc-if>
+            <sc-if value="{{ row.noChildren }}" hint-placeholder-val="{{ false }}"><span style="width:26px;flex:none"></span></sc-if>
+            <button onClick="{{ row.onOpen }}" style="{{ row.labelStyle }}" style-hover="background:var(--hover)">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.name }}</span>
+              <span style="color:var(--muted);font-size:12px;flex:none">{{ row.count }}</span>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding:14px 18px 20px;border-top:1px solid var(--border)">
+        <button onClick="{{ onCloseMove }}" style="height:42px;padding:0 20px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:10px;font-size:14px;cursor:pointer" style-hover="background:var(--hover)">キャンセル</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Auth dialog -->
+  <sc-if value="{{ showAuth }}" hint-placeholder-val="{{ true }}">
+  <div style="position:fixed;inset:0;z-index:95;display:flex;align-items:flex-start;justify-content:center;background:var(--scrim);animation:fadeIn .15s ease">
+    <div style="width:100%;max-width:480px;background:var(--panel);color:var(--fg);border-radius:0 0 18px 18px;animation:popIn .22s cubic-bezier(.2,.8,.2,1)">
+      <div style="display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--border)">
+        <span style="font-size:16px;font-weight:700">認証</span>
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;gap:14px">
+        <label style="font-size:13px;font-weight:600;color:var(--muted)">パスワード</label>
+        <input value="{{ authInput }}" onInput="{{ onAuthInput }}" onKeyDown="{{ onAuthKey }}" type="password" placeholder="パスワードを入力" style="width:100%;height:46px;padding:0 14px;font-size:16px;color:var(--fg);background:var(--elev);border:1px solid var(--border);border-radius:10px;outline:none">
+        <sc-if value="{{ authError }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:13px;color:#e2554b;font-weight:600">{{ authError }}</div>
+        </sc-if>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding:0 18px 20px">
+        <button onClick="{{ onAuthOk }}" style="height:44px;padding:0 28px;border:none;background:var(--accent);color:#fff;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">OK</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Lightbox -->
+  <sc-if value="{{ lightboxOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:80;background:#232729;animation:fadeIn .15s ease;display:grid;grid-template-rows:1fr 88px">
+    <div onClick="{{ onImgClick }}" style="position:relative;min-height:0;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <img src="{{ lbSrc }}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;object-position:center">
+    </div>
+    <div ref="{{ stripRef }}" style="z-index:88;display:flex;gap:6px;align-items:center;overflow-x:auto;overflow-y:hidden;padding:12px calc(50% - 32px);background:rgba(0,0,0,.5);backdrop-filter:blur(6px);scroll-behavior:smooth;cursor:grab;user-select:none;touch-action:pan-x" style-active="cursor:grabbing">
+      <sc-for list="{{ filmstrip }}" as="th" hint-placeholder-count="0">
+        <button onClick="{{ th.onClick }}" style="{{ th.style }}"><img src="{{ th.src }}" alt="" draggable="false" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;pointer-events:none"></button>
+      </sc-for>
+    </div>
+    <button onClick="{{ onPrev }}" style="position:fixed;left:0;top:0;width:min(200px,20vw);height:calc(100vh - 88px);border:none;background:transparent;cursor:pointer;z-index:82;transition:background .12s" style-active="background:#ffffff42 !important"></button>
+    <button onClick="{{ onNext }}" style="position:fixed;right:0;top:0;width:min(200px,20vw);height:calc(100vh - 88px);border:none;background:transparent;cursor:pointer;z-index:82;transition:background .12s" style-active="background:#ffffff42 !important"></button>
+    <button onClick="{{ onCloseLightbox }}" style="position:fixed;right:12px;top:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:none;background:rgba(0,0,0,.4);color:#fff;border-radius:50%;cursor:pointer;z-index:84" style-hover="background:rgba(0,0,0,.6)"><span class="ms" style="font-size:24px">close</span></button>
+
+    <sc-if value="{{ showMeta }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:0;bottom:88px;width:100vw;max-height:calc(88vh - 88px);overflow-y:auto;background:rgba(0,0,0,.62);backdrop-filter:blur(6px);color:#fff;z-index:86;animation:metaIn .28s cubic-bezier(.2,.8,.2,1);padding:20px 18px 26px">
+      <button onClick="{{ onDeleteCurrent }}" style="position:absolute;right:14px;top:14px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:rgba(255,255,255,.12);color:#fff;border-radius:50%;cursor:pointer" style-hover="background:rgba(255,255,255,.22)"><span class="ms" style="font-size:22px">delete</span></button>
+      <div style="display:flex;gap:4px;font-size:30px;line-height:1;margin-bottom:16px">
+        <sc-for list="{{ metaStars }}" as="st"><span onClick="{{ st.onClick }}" style="{{ st.style }};cursor:pointer">★</span></sc-for>
+      </div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:10px;word-break:break-all;padding-right:44px">{{ meta.name }}</div>
+      <sc-if value="{{ meta.hasMemo }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px;line-height:1.6;color:rgba(255,255,255,.82);margin-bottom:14px;white-space:pre-wrap;word-break:break-word">{{ meta.memo }}</div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:11px;font-size:13px">
+        <div style="display:flex;gap:12px"><span style="width:64px;color:rgba(255,255,255,.55);flex:none">フォルダ</span><button onClick="{{ meta.onFolder }}" style="padding:3px 10px;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:20px;font-size:12px;cursor:pointer" style-hover="background:rgba(255,255,255,.24)">{{ meta.folder }}</button></div>
+        <div style="display:flex;gap:12px"><span style="width:64px;color:rgba(255,255,255,.55);flex:none">サイズ</span><span>{{ meta.size }}</span></div>
+        <div style="display:flex;gap:12px"><span style="width:64px;color:rgba(255,255,255,.55);flex:none">形式</span><span>{{ meta.format }}</span></div>
+        <div style="display:flex;gap:12px"><span style="width:64px;color:rgba(255,255,255,.55);flex:none">解像度</span><span>{{ meta.res }}</span></div>
+        <div style="display:flex;gap:12px"><span style="width:64px;color:rgba(255,255,255,.55);flex:none">更新日時</span><span>{{ meta.date }}</span></div>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const pad=(n)=>String(n).padStart(2,'0');
+    this.folders=[
+      {id:'all',name:'すべて',parent:null},
+      {id:'photos',name:'写真',parent:'all'},
+      {id:'p2024',name:'2024',parent:'photos'},
+      {id:'p2023',name:'2023',parent:'photos'},
+      {id:'illust',name:'イラスト',parent:'all'},
+      {id:'design',name:'デザイン',parent:'illust'},
+      {id:'screen',name:'スクリーンショット',parent:'all'},
+      {id:'wall',name:'壁紙',parent:'all'},
+    ];
+    const exts=['JPG','PNG','WEBP','GIF'];
+    const leaf=['p2024','p2023','illust','design','screen','wall'];
+    const tagPool=['風景','夜景','ポートレート','建築','食べ物','動物','抽象','街並み'];
+    const imgs=[];
+    for(let i=0;i<96;i++){
+      const m=i%3; const w=m===0?600:(m===1?800:640); const h=m===0?820:(m===1?520:640);
+      const fmt=exts[i%exts.length];
+      imgs.push({
+        id:'img'+i, seed:120+i, w, h, format:fmt,
+        name:'IMG_'+String(2000+i)+'.'+fmt.toLowerCase(),
+        rating:(i*7)%6,
+        folderId:leaf[i%leaf.length],
+        sizeKB:180+(i*173)%4200,
+        resW:w*2, resH:h*2,
+        date:'2024/'+pad((i%12)+1)+'/'+pad((i%27)+1)+' '+pad(i%24)+':'+pad((i*7)%60)+':'+pad((i*13)%60),
+        modified:'2024/'+pad(((i+1)%12)+1)+'/'+pad(((i+5)%27)+1)+' '+pad((i*2)%24)+':'+pad((i*3)%60)+':'+pad((i*11)%60),
+        tags:[tagPool[i%tagPool.length], tagPool[(i+3)%tagPool.length]],
+        memo:['','お気に入りの一枚。','再編集が必要。','クライアント提出用。','SNS投稿候補。','','要トリミング。'][i%7],
+      });
+    }
+    this.imgs=imgs;
+    this.state={
+      theme:'light', currentFolderId:'all', gridCols:4, fit:'cover',
+      selectMode:false, selected:{}, actionMode:'default', rangeAnchor:null, actionRating:0,
+      showTree:false, showFilter:false, showSettings:false,
+      expanded:{all:true,photos:true,illust:true},
+      lightboxIndex:null, showMeta:false,
+      filter:{ratings:[],exts:[],keyword:'',tags:''},
+      draft:{ratings:[],exts:[],keyword:'',tags:''},
+      ratings:{}, deleted:{}, moved:{},
+      autoUpdate:true, autoInterval:10, maxSize:'', jpegQuality:85,
+      visible:30,
+      showMove:false, moveTargetId:null, moveExpanded:{all:true,photos:true,illust:true},
+      authed:false, authInput:'', authError:'',
+    };
+    this.scrollRef=React.createRef();
+    this.stripRef=React.createRef();
+    this.stripActiveRef=React.createRef();
+  }
+  centerStrip(smooth){ const strip=this.stripRef.current; if(!strip)return; const act=strip.children[this.state.lightboxIndex]; if(act==null)return; const target=act.offsetLeft-(strip.clientWidth/2)+(act.offsetWidth/2); strip.scrollTo({left:target,behavior:smooth?'smooth':'auto'}); }
+  centerStripSoon(smooth){ requestAnimationFrame(()=>{ this.centerStrip(smooth); requestAnimationFrame(()=>this.centerStrip(smooth)); }); setTimeout(()=>this.centerStrip(smooth),80); }
+  stripMount=(el)=>{
+    if(el&&el!==this._stripEl){ this._stripEl=el; this.attachDrag(el); }
+    this.stripRef.current=el;
+    if(el&&this.state.lightboxIndex!=null)this.centerStripSoon(false);
+  };
+  attachDrag(el){
+    let down=false,moved=false,startX=0,startScroll=0,prevBehavior='';
+    const onDown=(e)=>{ down=true;moved=false;startX=e.clientX;startScroll=el.scrollLeft;prevBehavior=el.style.scrollBehavior;el.style.scrollBehavior='auto'; };
+    const onMove=(e)=>{ if(!down)return; const dx=e.clientX-startX; if(Math.abs(dx)>4){ if(!moved){moved=true;try{el.setPointerCapture(e.pointerId);}catch(_){}} el.scrollLeft=startScroll-dx; } };
+    const onUp=(e)=>{ if(!down)return; down=false; el.style.scrollBehavior=prevBehavior; if(moved)this._suppressClick=true; try{el.releasePointerCapture(e.pointerId);}catch(_){} };
+    el.addEventListener('pointerdown',onDown);
+    el.addEventListener('pointermove',onMove);
+    el.addEventListener('pointerup',onUp);
+    el.addEventListener('pointercancel',onUp);
+    el.addEventListener('click',(e)=>{ if(this._suppressClick){e.stopPropagation();e.preventDefault();this._suppressClick=false;} },true);
+    el.addEventListener('dragstart',(e)=>e.preventDefault());
+  }
+  componentDidMount(){ this.applyTheme(); this._mql=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)'); if(this._mql&&this._mql.addEventListener){this._onMql=()=>{if(this.state.theme==='auto')this.applyTheme();};this._mql.addEventListener('change',this._onMql);} }
+  componentWillUnmount(){ if(this._mql&&this._onMql)this._mql.removeEventListener('change',this._onMql); }
+  componentDidUpdate(_,prev){ if(prev.theme!==this.state.theme)this.applyTheme();
+    if(this.state.lightboxIndex!=null&&prev.lightboxIndex!=null&&prev.lightboxIndex!==this.state.lightboxIndex){ this.centerStripSoon(true); } }
+  effTheme(theme){ const t=theme||this.state.theme; if(t==='auto')return (this._mql&&this._mql.matches)?'dark':'light'; return t; }
+  applyTheme(theme){
+    const dark=this.effTheme(theme)==='dark';
+    const v=dark?{'--bg':'#232729','--fg':'#ffffff','--panel':'#2a2f31','--elev':'#33383b','--border':'rgba(255,255,255,.13)','--muted':'#9aa1a5','--hover':'rgba(255,255,255,.07)','--thumb':'#1b1e20','--scrim':'rgba(0,0,0,.55)'}
+      :{'--bg':'#ffffff','--fg':'#1a1a1a','--panel':'#ffffff','--elev':'#f4f5f5','--border':'rgba(0,0,0,.10)','--muted':'#6b7075','--hover':'rgba(0,0,0,.05)','--thumb':'#eceded','--scrim':'rgba(0,0,0,.42)'};
+    const r=document.documentElement; Object.entries(v).forEach(([k,val])=>r.style.setProperty(k,val)); r.style.colorScheme=dark?'dark':'light';
+  }
+  src(img){ return 'https://picsum.photos/seed/'+img.seed+'/'+img.w+'/'+img.h; }
+  folderOf(img){ return this.state.moved[img.id]||img.folderId; }
+  tryAuth(){ if(this.state.authInput==='eagle')this.setState({authed:true,authError:'',authInput:''}); else this.setState({authError:'パスワードが間違っています'}); }
+  getRating(img){ return this.state.ratings[img.id]!=null?this.state.ratings[img.id]:img.rating; }
+  descOf(fid){ const set={[fid]:true}; let added=true; while(added){added=false;for(const f of this.folders){if(f.parent&&set[f.parent]&&!set[f.id]){set[f.id]=true;added=true;}}} return set; }
+  countIn(fid){ const set=this.descOf(fid); return this.imgs.filter(i=>!this.state.deleted[i.id]&&(fid==='all'||set[i.id]?false:false)).length; }
+  folderName(id){ const f=this.folders.find(x=>x.id===id); return f?f.name:''; }
+  buildTree(expanded,activeId,onToggle,onOpen){
+    const self=this; const rows=[];
+    const walk=(pid,depth)=>{ this.folders.filter(f=>f.parent===pid).forEach(f=>{
+      const kids=this.folders.some(x=>x.parent===f.id); const exp=!!expanded[f.id]; const active=f.id===activeId;
+      rows.push({ id:f.id,name:f.name,count:'('+this.countTotal(f.id)+')',hasChildren:kids,noChildren:!kids,caret:exp?'expand_more':'chevron_right',
+        rowStyle:'display:flex;align-items:center;padding-left:'+(depth*16)+'px',
+        labelStyle:'flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;height:36px;padding:0 14px 0 4px;border:none;background:'+(active?'var(--hover)':'transparent')+';color:var(--fg);font-size:14px;font-weight:'+(active?'700':'400')+';cursor:pointer;text-align:left',
+        onToggle:()=>onToggle(f.id), onOpen:()=>onOpen(f.id) });
+      if(exp)walk(f.id,depth+1);
+    }); };
+    walk('all',0);
+    const allActive='all'===activeId;
+    rows.unshift({ id:'all',name:'すべて',count:'('+this.countTotal('all')+')',hasChildren:true,noChildren:false,caret:expanded.all?'expand_more':'chevron_right',
+      rowStyle:'display:flex;align-items:center',
+      labelStyle:'flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;height:36px;padding:0 14px 0 4px;border:none;background:'+(allActive?'var(--hover)':'transparent')+';color:var(--fg);font-size:14px;font-weight:'+(allActive?'700':'400')+';cursor:pointer;text-align:left',
+      onToggle:()=>onToggle('all'), onOpen:()=>onOpen('all') });
+    return expanded.all?rows:[rows[0]];
+  }
+  filtered(){
+    const s=this.state; const set=this.descOf(s.currentFolderId);
+    const fr=s.filter;
+    return this.imgs.filter(i=>{
+      if(s.deleted[i.id])return false;
+      if(s.currentFolderId!=='all'&&!set[this.folderOf(i)])return false;
+      if(fr.ratings.length&&!fr.ratings.includes(this.getRating(i)))return false;
+      if(fr.exts.length&&!fr.exts.includes(i.format))return false;
+      if(fr.keyword&&!i.name.toLowerCase().includes(fr.keyword.toLowerCase()))return false;
+      if(fr.tags.trim()){ const want=fr.tags.split(',').map(t=>t.trim()).filter(Boolean); if(!want.some(t=>i.tags.some(x=>x.includes(t))))return false; }
+      return true;
+    });
+  }
+  onScroll=(e)=>{ const el=e.target; if(el.scrollTop+el.clientHeight>=el.scrollHeight-500){ const list=this.filtered(); if(this.state.visible<list.length)this.setState(st=>({visible:Math.min(st.visible+24,list.length)})); } };
+  navigate(id){ this.setState({currentFolderId:id,showTree:false,visible:30}); const el=this.scrollRef.current; if(el)el.scrollTop=0; }
+  toggleSel(id){ this.setState(st=>{ const sel={...st.selected}; if(sel[id])delete sel[id]; else sel[id]=true; return {selected:sel}; }); }
+  cellClick(img,index){
+    const s=this.state;
+    if(!s.selectMode){ this.setState({lightboxIndex:index}); return; }
+    if(s.actionMode==='range'){
+      if(!s.rangeAnchor){ this.setState({rangeAnchor:img.id}); return; }
+      if(s.rangeAnchor===img.id){ this.setState({rangeAnchor:null}); return; }
+      const list=this.filtered(); const a=list.findIndex(x=>x.id===s.rangeAnchor); const b=list.findIndex(x=>x.id===img.id);
+      const lo=Math.min(a,b),hi=Math.max(a,b); const sel={...s.selected};
+      for(let k=lo;k<=hi;k++)sel[list[k].id]=true;
+      this.setState({selected:sel,rangeAnchor:null,actionMode:'default'});
+      return;
+    }
+    this.toggleSel(img.id);
+  }
+  renderVals(){
+    const s=this.state; const list=this.filtered(); const self=this;
+    const starRow=(r)=>[1,2,3,4,5].map(n=>({style:n<=r?'color:#f5b301':'color:var(--fg);opacity:.28'}));
+    const cells=list.slice(0,s.visible).map((img,idx)=>({
+      id:img.id, src:this.src(img), format:img.format, rating:this.getRating(img),
+      stars:starRow(this.getRating(img)),
+      imgStyle:'width:100%;height:100%;object-fit:'+s.fit+';object-position:center;display:block',
+      showCheck:s.selectMode&&!!s.selected[img.id]&&!(s.actionMode==='range'&&s.rangeAnchor===img.id),
+      showAnchor:s.actionMode==='range'&&s.rangeAnchor===img.id,
+      onClick:()=>self.cellClick(img,idx),
+    }));
+
+    // breadcrumb
+    const chain=[]; let cur=s.currentFolderId; while(cur){ const f=this.folders.find(x=>x.id===cur); if(!f)break; chain.unshift(f); cur=f.parent; }
+    const breadcrumb=chain.map((f,i)=>({
+      name:f.name, notFirst:i>0,
+      style:'border:none;background:transparent;color:'+(i===chain.length-1?'var(--fg)':'var(--accent)')+';font-size:13px;font-weight:'+(i===chain.length-1?'700':'400')+';padding:3px 6px;border-radius:6px;cursor:pointer;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap',
+      onClick:()=>self.navigate(f.id),
+    }));
+
+    // trees
+    const finalTree=this.buildTree(s.expanded,s.currentFolderId,
+      (id)=>self.setState(st=>({expanded:{...st.expanded,[id]:!st.expanded[id]}})),
+      (id)=>self.navigate(id));
+    const moveTree=this.buildTree(s.moveExpanded,null,
+      (id)=>self.setState(st=>({moveExpanded:{...st.moveExpanded,[id]:!st.moveExpanded[id]}})),
+      (id)=>self.setState({showMove:false,moveTargetId:id,actionMode:'move'}));
+
+    // filter chips
+    const chipOn='display:flex;align-items:center;gap:4px;height:38px;padding:0 14px;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer';
+    const chipOff='display:flex;align-items:center;gap:4px;height:38px;padding:0 14px;border:1px solid var(--border);background:var(--elev);color:var(--fg);border-radius:20px;font-size:14px;cursor:pointer';
+    const ratingOpts=[0,1,2,3,4,5].map(r=>{ const on=s.draft.ratings.includes(r); return {
+      label:'★★★★★☆☆☆☆☆'.slice(5-r,10-r), on,
+      style:on?chipOn:chipOff,
+      onClick:()=>self.setState(st=>{ const arr=st.draft.ratings.includes(r)?st.draft.ratings.filter(x=>x!==r):[...st.draft.ratings,r]; return {draft:{...st.draft,ratings:arr}}; }),
+    };});
+    const extOpts=['WEBP','JPG','PNG','GIF'].map(x=>{ const on=s.draft.exts.includes(x); return {
+      label:x,on, style:on?chipOn:chipOff,
+      onClick:()=>self.setState(st=>{ const arr=st.draft.exts.includes(x)?st.draft.exts.filter(v=>v!==x):[...st.draft.exts,x]; return {draft:{...st.draft,exts:arr}}; }),
+    };});
+
+    // settings groups
+    const themeOpts=[['light','ライト'],['dark','ダーク'],['auto','自動']].map(([v,l])=>{ const on=s.theme===v; return {label:l,on,style:on?chipOn:chipOff,onClick:()=>{self.applyTheme(v);self.setState({theme:v});}}; });
+    const autoOpts=[[true,'有効'],[false,'無効']].map(([v,l])=>{ const on=s.autoUpdate===v; return {label:l,on,style:on?chipOn:chipOff,onClick:()=>self.setState({autoUpdate:v})}; });
+
+    // action stars (rating mode)
+    const actionStars=[1,2,3,4,5].map(n=>({style:n<=s.actionRating?'color:#f5b301':'color:var(--muted);opacity:.5',onClick:()=>self.setState(st=>({actionRating:st.actionRating===n?0:n}))}));
+
+    // lightbox / meta
+    const lbOpen=s.lightboxIndex!=null&&list[s.lightboxIndex];
+    let lbSrc='',meta={},metaStars=[];
+    if(lbOpen){ const img=list[s.lightboxIndex]; lbSrc=this.src(img); const r=this.getRating(img);
+      meta={name:img.name,memo:img.memo,hasMemo:!!img.memo,folder:this.folderName(this.folderOf(img)),size:img.sizeKB.toLocaleString()+' KB',format:img.format,res:img.resW+' x '+img.resH+' px',date:img.date,modified:img.modified,onFolder:()=>self.setState({lightboxIndex:null,showMeta:false},()=>self.navigate(self.folderOf(img)))};
+      metaStars=[1,2,3,4,5].map(n=>({style:n<=r?'color:#f5b301':'color:rgba(255,255,255,.32)',onClick:()=>self.setState(st=>({ratings:{...st.ratings,[img.id]:st.ratings[img.id]===n?0:n}}))}));
+    }
+    let filmstrip=[];
+    if(lbOpen){ const ci=s.lightboxIndex;
+      filmstrip=list.map((it,j)=>{ const cur=j===ci;
+        return { src:this.src(it), ref:cur?this.stripActiveRef:null,
+          style:'flex:none;width:64px;height:64px;padding:0;border:'+(cur?'2px solid #fff':'none')+';border-radius:6px;overflow:hidden;background:rgba(255,255,255,.1);cursor:pointer;opacity:'+(cur?'1':'.6')+';transition:opacity .15s',
+          onClick:(e)=>{e.stopPropagation();self.setState({lightboxIndex:j});self.centerStripSoon(true);} };
+      });
+    }
+
+    const filterActive=s.filter.ratings.length||s.filter.exts.length||s.filter.keyword||s.filter.tags.trim();
+    const hdrBase='width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;border-radius:9px;cursor:pointer;';
+
+    return {
+      gridTemplate:'repeat('+s.gridCols+',1fr)',
+      cells, isEmpty:list.length===0,
+      breadcrumb,
+      filterBtnStyle:hdrBase+(filterActive?'background:var(--accent);color:#fff':'background:transparent;color:var(--fg)'),
+      selectBtnStyle:hdrBase+(s.selectMode?'background:var(--accent);color:#fff':'background:transparent;color:var(--fg)'),
+      onHamburger:()=>self.setState({showTree:true}),
+      onFilter:()=>self.setState(st=>({showFilter:true,draft:{ratings:[...st.filter.ratings],exts:[...st.filter.exts],keyword:st.filter.keyword,tags:st.filter.tags}})),
+      onSettings:()=>self.setState({showSettings:true}),
+      onToggleSelect:()=>self.setState(st=>st.selectMode?{selectMode:false,selected:{},actionMode:'default',rangeAnchor:null}:{selectMode:true,actionMode:'default'}),
+
+      showGridCtrl:s.lightboxIndex==null,
+      gridCtrlStyle:'position:fixed;right:14px;z-index:30;display:flex;gap:8px;bottom:'+(s.selectMode?'86px':'18px'),
+      isCover:s.fit==='cover', isContain:s.fit==='contain',
+      onToggleFit:()=>self.setState(st=>({fit:st.fit==='cover'?'contain':'cover'})),
+      onSizeUp:()=>self.setState(st=>({gridCols:Math.max(1,st.gridCols-1)})),
+      onSizeDown:()=>self.setState(st=>({gridCols:Math.min(10,st.gridCols+1)})),
+
+      selectMode:s.selectMode, selectedCount:Object.keys(s.selected).length,
+      actDefault:s.actionMode==='default', actRange:s.actionMode==='range', actRating:s.actionMode==='rating', actDelete:s.actionMode==='delete', actMove:s.actionMode==='move',
+      actionStars, moveTargetName:this.folderName(s.moveTargetId),
+      onRangeBtn:()=>self.setState({actionMode:'range',rangeAnchor:null}),
+      onRatingBtn:()=>self.setState({actionMode:'rating',actionRating:0}),
+      onMoveBtn:()=>self.setState({showMove:true}),
+      onDeleteBtn:()=>self.setState({actionMode:'delete'}),
+      onMoveApply:()=>self.setState(st=>{ const mv={...st.moved}; Object.keys(st.selected).forEach(id=>mv[id]=st.moveTargetId); return {moved:mv,selected:{},actionMode:'default',moveTargetId:null}; }),
+      showMove:s.showMove, moveTree, onCloseMove:()=>self.setState({showMove:false}),
+      showAuth:!s.authed, authInput:s.authInput, authError:s.authError,
+      onAuthInput:(e)=>self.setState({authInput:e.target.value,authError:''}),
+      onAuthKey:(e)=>{ if(e.key==='Enter')self.tryAuth(); },
+      onAuthOk:()=>self.tryAuth(),
+      onActCancel:()=>self.setState({actionMode:'default',rangeAnchor:null}),
+      onRatingApply:()=>self.setState(st=>{ const rt={...st.ratings}; Object.keys(st.selected).forEach(id=>rt[id]=st.actionRating); return {ratings:rt,actionMode:'default'}; }),
+      onDeleteApply:()=>self.setState(st=>{ const del={...st.deleted}; Object.keys(st.selected).forEach(id=>del[id]=true); return {deleted:del,selected:{},actionMode:'default'}; }),
+
+      showTree:s.showTree, treeRows:finalTree,
+      onCloseTree:()=>self.setState({showTree:false}), stop:(e)=>e.stopPropagation(),
+
+      showFilter:s.showFilter, ratingOpts, extOpts, draftKeyword:s.draft.keyword, draftTags:s.draft.tags,
+      onKeyword:(e)=>{const v=e.target.value;self.setState(st=>({draft:{...st.draft,keyword:v}}));},
+      onTags:(e)=>{const v=e.target.value;self.setState(st=>({draft:{...st.draft,tags:v}}));},
+      onCloseFilter:()=>self.setState({showFilter:false}),
+      onClearFilter:()=>self.setState({filter:{ratings:[],exts:[],keyword:'',tags:''},draft:{ratings:[],exts:[],keyword:'',tags:''},showFilter:false,visible:30}),
+      onApplyFilter:()=>self.setState(st=>({filter:{ratings:[...st.draft.ratings],exts:[...st.draft.exts],keyword:st.draft.keyword,tags:st.draft.tags},showFilter:false,visible:30})),
+
+      showSettings:s.showSettings, themeOpts, autoOpts, autoInterval:s.autoInterval, maxSize:s.maxSize, jpegQuality:s.jpegQuality,
+      onCloseSettings:()=>self.setState({showSettings:false}),
+      onInterval:(e)=>self.setState({autoInterval:e.target.value}),
+      onMaxSize:(e)=>self.setState({maxSize:e.target.value}),
+      onJpeg:(e)=>self.setState({jpegQuality:e.target.value}),
+
+      lightboxOpen:!!lbOpen, lbSrc, showMeta:s.showMeta, meta, metaStars, filmstrip, stripRef:this.stripMount,
+      onImgClick:()=>self.setState(st=>({showMeta:!st.showMeta})),
+      onCloseLightbox:()=>self.setState({lightboxIndex:null,showMeta:false}),
+      onPrev:(e)=>{e.stopPropagation();self.setState(st=>({lightboxIndex:Math.max(0,st.lightboxIndex-1)}));self.centerStripSoon(true);},
+      onNext:(e)=>{e.stopPropagation();self.setState(st=>({lightboxIndex:Math.min(list.length-1,st.lightboxIndex+1)}));self.centerStripSoon(true);},
+      onDeleteCurrent:()=>{ const img=list[s.lightboxIndex]; if(!img)return; if(!window.confirm(img.name+'を削除しますか？'))return; self.setState(st=>{ const del={...st.deleted,[img.id]:true}; const ni=st.lightboxIndex>=list.length-1?(list.length-2):st.lightboxIndex; return {deleted:del,lightboxIndex:ni<0?null:ni,showMeta:ni<0?false:st.showMeta}; }); },
+    };
+  }
+  countTotal(fid){ const set=this.descOf(fid); return this.imgs.filter(i=>!this.state.deleted[i.id]&&(fid==='all'||set[this.folderOf(i)])).length; }
+}
+</script>
+</body>
+</html>
