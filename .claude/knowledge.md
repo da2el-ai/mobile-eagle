@@ -159,3 +159,23 @@ JPEG は透過を持てない。`OffscreenCanvas` は初期状態が透明なの
 
 OS ログイン直後だと、Eagle 起動時点で `utun*` がまだ `os.networkInterfaces()` に現れていない
 可能性がある。起動直後に 1 回だけ判定すると誤検知するため、数秒おきに数回リトライしてから判定する。
+
+---
+
+## フロントエンド（Vite + Vue 3）
+
+### `vue-tsc -b`（型チェック）が作業ツリーを汚す
+
+`tsconfig.node.json`（`vite.config.ts` を含む composite プロジェクト）は
+`noEmit: true` にできない（`error TS6310: Referenced project may not disable emit`）。
+そのまま `vue-tsc -b` を実行すると、リポジトリ直下に `vite.config.js` / `vite.config.d.ts` /
+`*.tsbuildinfo` が生成され、`git status` に混入する。
+
+**対策**：`tsconfig.node.json` の `outDir` を `./node_modules/.tmp/tsc-node` に逃がし、
+`*.tsbuildinfo`（root の solution 用に別途生成される）は `frontend/.gitignore` で除外する。
+「なぜ outDir を node_modules に向けているのか」がすぐ分かるよう、この理由を残す。
+
+### `vue-tsc -b` の実行後にこれらが再生成される点に注意
+
+`yarn build`（`vue-tsc -b && vite build`）のたびに tsbuildinfo は再生成される。
+gitignore しているので通常は問題ないが、`git clean` 等で消しても実害はない（キャッシュのため）。

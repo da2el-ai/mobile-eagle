@@ -311,11 +311,11 @@ frontend/
 
 ### base.md 自体の実装ステップ
 
-- [ ] 1. 現行の移植版（`frontend/` と `plugin/public/`、いずれも未コミット）をコミットし、
+- [x] 1. 現行の移植版（`frontend/` と `plugin/public/`、いずれも未コミット）をコミットし、
   `frontend/` を `frontend-old/` へリネームする。新規スキャフォールドを `frontend/` に作る
   （Vite / TS / Tailwind / Pinia / Router / ESLint 最小構成。`yarn dev --host` でタイトル
   「Mobile Eagle」のシェル（ヘッダーのみの画面）が表示される）
-- [ ] 2. デザインシステムを実装する（テーマ CSS 変数・`use-theme.ts`・**`use-settings.ts` の骨格**
+- [x] 2. デザインシステムを実装する（テーマ CSS 変数・`use-theme.ts`・**`use-settings.ts` の骨格**
   （テーマ設定の読み書きに必要。settings.md 4 章のスキーマで実装）・共通コンポーネント:
   ダイアログ枠 / チップボタン / 星 / トースト / アイコン）と i18n 基盤（`use-i18n.ts` + ja/en）
 
