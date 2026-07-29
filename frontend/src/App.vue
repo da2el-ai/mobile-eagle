@@ -2,12 +2,14 @@
 import { onMounted, watch } from 'vue';
 import AppHeader from '@/components/header/AppHeader.vue';
 import BreadcrumbNav from '@/components/header/BreadcrumbNav.vue';
+import FolderTreeDialog from '@/components/folder-tree/FolderTreeDialog.vue';
 import ToastHost from '@/components/common/ToastHost.vue';
 import AuthDialog from '@/components/auth/AuthDialog.vue';
 import { useTheme } from '@/composables/use-theme';
 import { useI18n } from '@/composables/use-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useFoldersStore } from '@/stores/folders';
+import { useUiStore } from '@/stores/ui';
 import { setUnauthorizedHandler } from '@/api/eagle-api';
 
 // テーマを初期化する（起動時に一度だけ）。
@@ -15,6 +17,7 @@ useTheme();
 const { t } = useI18n();
 const auth = useAuthStore();
 const folders = useFoldersStore();
+const ui = useUiStore();
 
 // 401 共通処理: セッション失効で認証ダイアログを再表示する（auth.md 5 章）。
 setUnauthorizedHandler(() => auth.requireLogin());
@@ -39,6 +42,8 @@ watch(
       <AppHeader />
       <BreadcrumbNav />
       <router-view />
+
+      <FolderTreeDialog v-if="ui.isTreeOpen" />
     </template>
 
     <!-- 接続エラー: 白画面で固まらせず再試行できるようにする（auth.md 3 章）。 -->
