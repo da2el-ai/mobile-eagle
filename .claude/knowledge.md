@@ -234,6 +234,15 @@ gitignore しているので通常は問題ないが、`git clean` 等で消し�
 
 型だけ確認したいときは `npx vue-tsc --noEmit -p tsconfig.json` を使う。
 
+### `yarn dev` は Node v16 以下では起動できない
+
+`crypto$2.getRandomValues is not a function` で落ちる（Vite 5 が `crypto.getRandomValues` を
+要求するが、Node 16 では global に無い）。このマシンの nodebrew のデフォルトは v16 のため、
+何もしなければ必ず踏む。
+
+**対策**：`export PATH="$HOME/.nodebrew/node/v22.20.0/bin:$PATH"` を通してから
+`yarn dev --host` を実行する。グローバル `fetch` を使うスモークテストも同様。
+
 ---
 
 ## グリッドビュー（描画方式）
@@ -271,3 +280,27 @@ DOM 仮想化を捨てた代わりの `content-visibility` 方式は
 
 **対策**：ロード完了後に `unobserve()` → `observe()` で監視を張り直して再評価させる
 （`GridView.vue` の `reobserveSentinel()`）。
+
+---
+
+## 仕様策定
+
+### モックアップを一次情報にすると、移植元にあった機能が黙って落ちる
+
+グリッドから子フォルダへ「潜る」導線（移植元 Simple Eagle の `ImageListFolder.vue`）が、
+仕様書 6 本（base / grid / folder-tree / lightbox / settings / auth）のどこにも入っていなかった。
+Claude Design 製モックアップ（`.claude/design/Mobile Eagle.dc.html`）にフォルダセルの markup が
+無く、モックアップを一次情報として仕様を起こしたため、そのまま欠落した。
+ユーザーが実機で「グリッドにフォルダが表示されない」と気付くまで発覚しなかった
+（grid-2 完了後。仕様策定から実装 5 ステップぶん遅れて判明した）。
+
+パンくずは「戻る」導線でしかなく、フォルダツリーは操作コストが高い。つまりこれは
+装飾ではなく**「潜る」唯一の低コストな導線**であり、欠けたまま完成すると使い勝手を大きく損なう。
+
+**モックアップはレイアウト・数値の一次情報ではあるが、機能の網羅性の一次情報ではない。**
+新しいビューの仕様を起こすときは、モックアップに加えて
+**移植元 `~/work/AI/Eagle関連/simple-eagle` の対応コンポーネントを必ず読み、
+「モックアップに無いが移植元にある機能」を一つずつ採否判断する**こと。
+意図的に落とす場合は、その旨と理由を仕様書に書き残す
+（folder-tree.md の「モックアップは『すべて』をツリーのルートにしているが踏襲しない」のように）。
+残る lightbox / settings も同じ穴が空いている可能性がある。

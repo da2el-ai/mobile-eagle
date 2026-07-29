@@ -32,6 +32,10 @@ const ICONS: Record<string, IconNode[]> = {
     ['path', { d: 'M4 8V6a1 1 0 0 1 1-1h4l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z' }],
     ['path', { d: 'M9 13h5m0 0l-2-2m2 2l-2 2' }],
   ],
+  // グリッドの子フォルダセル用（grid.md 3.6）。move から矢印を除いた形。
+  folder: [
+    ['path', { d: 'M4 8V6a1 1 0 0 1 1-1h4l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z' }],
+  ],
   check: [['path', { d: 'M5 12l4 4 8-9' }]],
   sun: [
     ['circle', { cx: 12, cy: 12, r: 4 }],

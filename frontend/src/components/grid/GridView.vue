@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import FolderCell from './FolderCell.vue';
 import GridCell from './GridCell.vue';
 import GridController from './GridController.vue';
+import { useFolderNavigation } from '@/composables/use-folder-navigation';
 import { useI18n } from '@/composables/use-i18n';
 import { useRouteContext } from '@/composables/use-route-context';
 import { useSettings } from '@/composables/use-settings';
+import { useFoldersStore } from '@/stores/folders';
 import { useItemsStore } from '@/stores/items';
 import { useSelectionStore } from '@/stores/selection';
+import type { TFolderItem } from '@/types';
 
 // グリッドビュー本体（grid.md 3.3・3.4）。DOM 仮想化はせず content-visibility に任せる（base.md 11 章）。
 
@@ -22,6 +26,8 @@ const { t } = useI18n();
 const route = useRoute();
 const { folderId, filter } = useRouteContext();
 const { settings, update } = useSettings();
+const { navigateToFolder } = useFolderNavigation();
+const folders = useFoldersStore();
 const items = useItemsStore();
 const selection = useSelectionStore();
 
@@ -45,6 +51,15 @@ watch(maxCols, (max) => {
 });
 
 const isEmpty = computed(() => !items.isLoading && items.items.length === 0);
+
+// グリッド先頭に並べる子フォルダ（grid.md 3.6）。
+// 仮想フォルダ（すべて / 未分類）では表示しない。フィルタ適用中は常に表示する
+// （フィルタが絞るのは画像のみで、潜る導線は残す）。
+const childFolders = computed<TFolderItem[]>(() => {
+  if (folderId.value === 'all' || folderId.value === 'uncategorized') return [];
+  const path = folders.findPath(folderId.value);
+  return path[path.length - 1]?.children ?? [];
+});
 
 let resizeObserver: ResizeObserver | null = null;
 let intersectionObserver: IntersectionObserver | null = null;
@@ -115,6 +130,11 @@ const onSelectCell = (): void => {
   // TODO(grid-3): 選択モード中は選択トグル・範囲選択にする（grid.md 5 章）。
   // TODO(lightbox): 通常時は query に image={id} を push して Lightbox を開く（grid.md 3.3）。
 };
+
+// 子フォルダへ潜る。フィルタ query は維持される（use-folder-navigation）。
+const onSelectFolder = (folder: TFolderItem): void => {
+  navigateToFolder(folder.id);
+};
 </script>
 
 <template>
@@ -128,6 +148,15 @@ const onSelectCell = (): void => {
       class="grid gap-[3px] p-[3px]"
       :style="{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }"
     >
+      <!-- 子フォルダは画像より前（grid.md 3.6）。ページングとは無関係に常に全件並べる。 -->
+      <FolderCell
+        v-for="folder in childFolders"
+        :key="`folder-${folder.id}`"
+        :folder="folder"
+        :disabled="selection.isSelectMode"
+        @select="onSelectFolder(folder)"
+      />
+
       <GridCell
         v-for="item in items.items"
         :key="item.id"
