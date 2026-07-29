@@ -25,6 +25,16 @@ export default {
     all: 'すべて',
     uncategorized: '未分類',
   },
+  filter: {
+    stars: '評価',
+    exts: '拡張子',
+    keyword: 'キーワード',
+    keywordPlaceholder: '検索キーワードを入力',
+    tags: 'タグ',
+    tagsPlaceholder: 'タグを「,」区切りで入力',
+    tagsHelp: '複数のタグを「,」区切りで入力してください',
+    clear: 'フィルタ解除',
+  },
   grid: {
     empty: '表示する画像がありません',
     toggleFit: '表示切替',

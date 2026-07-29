@@ -3,6 +3,7 @@ import { onMounted, watch } from 'vue';
 import AppHeader from '@/components/header/AppHeader.vue';
 import BreadcrumbNav from '@/components/header/BreadcrumbNav.vue';
 import FolderTreeDialog from '@/components/folder-tree/FolderTreeDialog.vue';
+import FilterDialog from '@/components/filter/FilterDialog.vue';
 import ToastHost from '@/components/common/ToastHost.vue';
 import AuthDialog from '@/components/auth/AuthDialog.vue';
 import { useTheme } from '@/composables/use-theme';
@@ -44,6 +45,7 @@ watch(
       <router-view />
 
       <FolderTreeDialog v-if="ui.isTreeOpen" />
+      <FilterDialog v-if="ui.isFilterOpen" />
     </template>
 
     <!-- 接続エラー: 白画面で固まらせず再試行できるようにする（auth.md 3 章）。 -->

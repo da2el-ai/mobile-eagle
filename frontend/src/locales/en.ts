@@ -25,6 +25,16 @@ export default {
     all: 'All',
     uncategorized: 'Uncategorized',
   },
+  filter: {
+    stars: 'Rating',
+    exts: 'File type',
+    keyword: 'Keyword',
+    keywordPlaceholder: 'Enter a search keyword',
+    tags: 'Tags',
+    tagsPlaceholder: 'Enter tags separated by ","',
+    tagsHelp: 'Separate multiple tags with ","',
+    clear: 'Clear filter',
+  },
   grid: {
     empty: 'No images to show',
     toggleFit: 'Toggle fit',
