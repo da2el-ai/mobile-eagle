@@ -70,35 +70,33 @@ export const useItemsStore = defineStore('items', () => {
     }
   }
 
-  // 現在ロード済みのページ数ぶんを取り直す（自動リロード用。grid.md 6 章）。
+  // 現在ロード済みの範囲を取り直す（自動リロード用。grid.md 6.3）。
+  // ページを順次取得すると、取得中のアイテム増減で重複・欠落が起きる。
+  // limit = ページ数 × 600 の 1 リクエストでまるごと差し替えることで防ぐ
+  // （バックエンドの limit は JS 側の slice なので上限は無い）。
   async function reloadAll(): Promise<void> {
     if (!context || isReloading.value || isLoading.value) return;
     const pages = Math.max(1, pageCount.value);
+    const limit = pages * ITEM_GET_COUNT;
     isReloading.value = true;
     try {
-      const fresh: TImageItem[] = [];
-      let more = true;
-      let loaded = 0;
-      for (let page = 0; page < pages; page += 1) {
-        const data = await fetchItems({
-          folderId: context.folderId,
-          filter: context.filter,
-          offset: page,
-        });
-        fresh.push(...data);
-        loaded = page + 1;
-        if (data.length < ITEM_GET_COUNT) {
-          more = false;
-          break;
-        }
-      }
-      items.value = fresh;
-      pageCount.value = loaded;
-      hasMore.value = more;
+      const data = await fetchItems({
+        folderId: context.folderId,
+        filter: context.filter,
+        offset: 0,
+        limit,
+      });
+      items.value = data;
+      // 件数が減っていることもあるため、実データからページ数を割り出し直す。
+      pageCount.value = Math.max(1, Math.ceil(data.length / ITEM_GET_COUNT));
+      hasMore.value = data.length >= limit;
     } catch (e) {
       showToast(errorMessage(e));
     } finally {
-      isReloading.value = false;
+      // オブザーバー誤発火の余韻対策で、解除は完了の 200ms 後にする（grid.md 6.3）。
+      setTimeout(() => {
+        isReloading.value = false;
+      }, 200);
     }
   }
 

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import ActionView from './ActionView.vue';
 import FolderCell from './FolderCell.vue';
 import GridCell from './GridCell.vue';
 import GridController from './GridController.vue';
+import { useAutoReload } from '@/composables/use-auto-reload';
 import { useFolderNavigation } from '@/composables/use-folder-navigation';
 import { useI18n } from '@/composables/use-i18n';
 import { useRouteContext } from '@/composables/use-route-context';
@@ -11,7 +13,7 @@ import { useSettings } from '@/composables/use-settings';
 import { useFoldersStore } from '@/stores/folders';
 import { useItemsStore } from '@/stores/items';
 import { useSelectionStore } from '@/stores/selection';
-import type { TFolderItem } from '@/types';
+import type { TFolderItem, TImageItem } from '@/types';
 
 // グリッドビュー本体（grid.md 3.3・3.4）。DOM 仮想化はせず content-visibility に任せる（base.md 11 章）。
 
@@ -34,6 +36,9 @@ const selection = useSelectionStore();
 const scrollRef = ref<HTMLElement | null>(null);
 const sentinelRef = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
+
+// 自動リロード（grid.md 6 章）。スクロール位置の復元にコンテナを渡す。
+useAutoReload(() => scrollRef.value);
 
 // 列数はブレークポイント別ではなく単一の数値。表示時はコンテナ幅で clamp する（grid.md 3.5）。
 const maxCols = computed(() => Math.max(1, Math.floor(containerWidth.value / MIN_CELL_WIDTH)));
@@ -126,8 +131,35 @@ onBeforeUnmount(() => {
   intersectionObserver?.disconnect();
 });
 
-const onSelectCell = (): void => {
-  // TODO(grid-3): 選択モード中は選択トグル・範囲選択にする（grid.md 5 章）。
+// 範囲選択（A→B）の基準になる表示順。フォルダセルは対象外（grid.md 3.6）。
+const orderedIds = computed(() => items.items.map((item) => item.id));
+
+// 範囲選択（grid.md 5.2）。A 未設定なら始点、設定済みなら終点として確定する。
+const onRangeTap = (item: TImageItem): void => {
+  const anchor = selection.rangeAnchorId;
+  if (!anchor) {
+    selection.setRangeAnchor(item.id);
+    return;
+  }
+  // 始点と同じセルの再タップは「A」の解除として扱う（grid.md 7 章）。
+  if (anchor === item.id) {
+    selection.setRangeAnchor(null);
+    return;
+  }
+  selection.selectRange(orderedIds.value, anchor, item.id);
+  selection.setRangeAnchor(null);
+  selection.setActionMode('default');
+};
+
+const onSelectCell = (item: TImageItem): void => {
+  if (selection.actionMode === 'range') {
+    onRangeTap(item);
+    return;
+  }
+  if (selection.isSelectMode) {
+    selection.toggle(item.id);
+    return;
+  }
   // TODO(lightbox): 通常時は query に image={id} を push して Lightbox を開く（grid.md 3.3）。
 };
 
@@ -164,7 +196,13 @@ const onSelectFolder = (folder: TFolderItem): void => {
         :object-fit="settings.objectFit"
         :cell-width="cellWidth"
         :cell-height="cellHeight"
-        @select="onSelectCell"
+        :show-check="
+          selection.isSelectMode &&
+            selection.isSelected(item.id) &&
+            selection.rangeAnchorId !== item.id
+        "
+        :show-anchor="selection.actionMode === 'range' && selection.rangeAnchorId === item.id"
+        @select="onSelectCell(item)"
       />
     </div>
 
@@ -181,4 +219,6 @@ const onSelectFolder = (folder: TFolderItem): void => {
 
   <!-- Lightbox 表示中は隠す（grid.md 3.5）。 -->
   <GridController v-if="!route.query.image" :max-cols="maxCols" />
+
+  <ActionView v-if="selection.isSelectMode" />
 </template>
