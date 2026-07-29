@@ -83,8 +83,10 @@ ME.eagleAdapter = (() => {
     // 検証済みなのは単一値の挙動のみで、複数値指定は未検証のため
     // （keyword が黙って無視された前例があり、未検証の値はプラグイン API に渡さない）
 
-    // keyword（単数）はプラグイン API では無視されるため keywords（配列）に変換する
-    if (params.keyword) condition.keywords = [params.keyword];
+    // keyword は condition に渡さず JS 側で照合する（getItems の matchesKeyword）。
+    // eagle.item.get() の keywords はファイル名しか見ず、annotation（メモ）を対象にできない。
+    // annotation パラメータと併用しても AND になるため「名前 OR メモ」を API 側で表現できない
+    // （実機検証: keywords=['screenshot'] × annotation='krea' が 0 件。knowledge.md に詳細）
 
     if (params.tags) {
       const tags = params.tags.split(',').map((s) => s.trim()).filter(Boolean);
@@ -99,6 +101,23 @@ ME.eagleAdapter = (() => {
     }
 
     return condition;
+  }
+
+  /**
+   * キーワードがアイテムに一致するかを判定する。
+   * Eagle 本体の検索窓と同じ挙動に合わせている（実機で確認）:
+   *   - 対象はファイル名（name）とメモ（annotation）
+   *   - 空白区切りの複数語は AND（順不同）
+   *   - 大文字・小文字は区別しない
+   *   - 語は単語境界ではなく連続部分文字列として一致する（「foo bar」が「foobar」に一致）
+   *   - カンマは区切りではない（「hoge,fuga」は 1 語扱いで一致しない）
+   * @param {object} item アイテム
+   * @param {string[]} words 小文字化済みの検索語
+   */
+  function matchesKeyword(item, words) {
+    // 改行で連結するので、語がファイル名とメモをまたいで一致することはない。
+    const haystack = `${item.name || ''}\n${item.annotation || ''}`.toLowerCase();
+    return words.every((word) => haystack.includes(word));
   }
 
   return {
@@ -122,6 +141,15 @@ ME.eagleAdapter = (() => {
       // （プラグイン API に「未分類」の概念が無いため JS 側で絞り込む）
       if (params.folders === 'uncategorized') {
         items = items.filter((item) => (item.folders || []).length === 0);
+      }
+
+      // keyword フィルタ（ファイル名 + メモ / 空白区切り AND）。
+      // \s は全角スペースにも一致するため、日本語入力の区切りもそのまま扱える
+      if (params.keyword) {
+        const words = params.keyword.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        if (words.length > 0) {
+          items = items.filter((item) => matchesKeyword(item, words));
+        }
       }
 
       // ext フィルタ（カンマ区切りの複数値対応）。

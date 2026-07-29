@@ -39,16 +39,39 @@
 Eagle Web API（`localhost:41595`）にはあるが、プラグイン API にはない。
 数万件を一度に返すため、並べ替えと件数制限は JS 側で行う。
 
-### `keyword`（単数）は無視される。`keywords`（配列）を使う
+### `keywords` はファイル名しか見ない。`annotation` と併用すると AND になる
 
-`eagle.item.get({ keyword: 'a' })` は**パラメータが無視され全件（19,142件）が返る**。
-`eagle.item.get({ keywords: ['a'] })` なら正しく絞り込まれる（14,854件）。
+`eagle.item.get({ keyword: 'a' })`（単数）は**パラメータが無視され全件が返る**。
+`keywords: ['a']`（配列）なら絞り込まれるが、**照合対象はファイル名（`name`）だけ**で、
+メモ（`annotation`）もタグも対象外。実測（`keywords: ['screenshot']`）では name 一致の 24 件を
+過不足なく返し、メモにだけ含む 4 件・タグにだけ含む 2 件はヒットしなかった。
 
-Simple Eagle は Web API の `keyword`（単数）を使っていたので、移植時は
-**`keywords: [keyword]` に変換する必要がある**。
+`annotation` パラメータは公式ドキュメントどおり存在し、単独なら部分一致で正しく機能する
+（`annotation: 'krea'` で 18 件 = 全件走査での集計と一致）。
+**しかし `keywords` と併用すると AND になる。** name にだけヒットする語（`screenshot` = 24 件）と
+annotation にだけヒットする語（`krea` = 18 件）を同時指定した結果は **0 件**だった
+（OR なら 41 件前後になるはず）。同じ語を両方に指定した場合も、name と annotation の両方に
+その語を含む 1 件だけが返った。
+
+→ **「ファイル名 または メモ」を Eagle 側の条件で表現する方法は無い。**
+そのため Mobile Eagle は `keyword` を condition に渡さず、`eagle-adapter.js` の
+`matchesKeyword()` で JS 側照合している。挙動は Eagle 本体の検索窓に合わせた
+（ファイル名 + メモ / 空白区切りは AND・順不同 / 大文字小文字を区別しない /
+単語境界ではなく連続部分文字列で一致 / カンマは区切りではない）。
+`/list` は元々全件走査しているため追加コストはほぼ無い。
+**この自前照合を「API に任せられるのでは」と戻さないこと。**
 
 なお `ext` / `tags` / `folders` フィルタは実測でいずれも正しく機能する。
-無視されるのは `keyword`（単数）だけ。
+
+### Web API（`localhost:41595`）では `keywords` / `name` が無視される
+
+プラグイン API と**同じ名前のパラメータでも挙動が違う**。
+Web API の `/api/v2/item/get?keywords=krea` は絞り込まれず**先頭 1000 件がそのまま返る**
+（結果 1000 件のうち name にも annotation にも `krea` を含むものが 0 件だった）。
+`name=krea` / `keyword=krea` も同様に無視される。`annotation=krea` だけは正しく 18 件に絞られる。
+
+検索したのに「関係ないものばかり出てくる」ように見えるのは、フィルタが効かず
+全件の先頭が返っているため。**Web API の結果を根拠にプラグイン API の実装を決めないこと。**
 
 ### `folder` に `imageCount` は無い
 

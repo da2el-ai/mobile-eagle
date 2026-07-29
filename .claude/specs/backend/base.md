@@ -111,7 +111,7 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 | `limit` | int | 200 | 1 ページの件数（フロントは 600 を渡す） |
 | `offset` | int | 0 | **ページ番号**（アイテム数ではない。スキップ件数 = `offset × limit`） |
 | `orderBy` | string | なし | 受け取るが現状フロント未使用（オープン課題参照） |
-| `keyword` | string | なし | キーワード検索 |
+| `keyword` | string | なし | キーワード検索（ファイル名 + メモ。空白区切りは AND） |
 | `ext` | string | なし | 拡張子フィルタ |
 | `tags` | string | なし | タグフィルタ（カンマ区切り） |
 | `folders` | string | なし | フォルダ ID フィルタ（カンマ区切り） |
@@ -120,7 +120,7 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 
 1. `eagle.item.get()` に条件を渡す
    - `tags` / `folders` はカンマ区切り文字列で届くため、**配列に分割してから**渡す
-   - **`keyword`（単数）はプラグイン API では無視される**ため、`keywords: [keyword]` に変換する
+   - **`keyword` はプラグイン API に渡さず JS 側で照合する**（下記 6.1.1）
    - 値が空の条件はキー自体を渡さない（`undefined` を渡すと挙動が不定になるため）
 2. 並べ替え・`offset × limit` のスキップ・`limit` 件の切り出しは **JS 側で行う**
    （プラグイン API に `orderBy` / `limit` / `offset` が存在しないため）
@@ -135,6 +135,22 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 ```json
 { "status": "success", "data": [ { "id": "...", "name": "...", "star": 0, ... } ] }
 ```
+
+#### 6.1.1 キーワード検索（JS 側で照合する）
+
+**Eagle 本体の検索窓と同じ挙動に合わせる**（実機で確認済み）：
+
+- 対象は**ファイル名（`name`）とメモ（`annotation`）**
+- **空白区切りの複数語は AND**（順不同）。`\s` で分割するため全角スペースも区切りになる
+- 大文字・小文字は区別しない
+- 語は単語境界ではなく**連続部分文字列**として一致する（「foo bar」が「foobar」に一致）
+- **カンマは区切りではない**（「hoge,fuga」は 1 語として扱われ、一致しない）
+
+プラグイン API に任せない理由（実機検証。knowledge.md に詳細）：
+
+- `eagle.item.get({keywords})` は**ファイル名しか見ない**（メモ・タグは対象外）
+- `annotation` パラメータは単独では機能するが、`keywords` と併用すると **AND** になるため、
+  「ファイル名 **または** メモ」を API 側で表現できない
 
 - `star` は **int で返す**（未設定は 0。Simple Eagle が Python 側で int 変換していた挙動を維持）
 - エラー時は `{ "status": "error", "message": "..." }`（フロントは `data.status === 'error'` を見る）
@@ -367,8 +383,8 @@ UI 変更なし（ステータスウィンドウの UI は別仕様）。
   フォルダ数だけ全件走査が走るため避ける）
 - [x] **item の未検証プロパティはすべて実在**：`modifiedAt` / `noThumbnail` / `thumbnailPath` /
   `annotation` / `url` / `tags`。ただし **`star` は評価なしのとき `undefined`**（`0` ではない）
-- [x] **`keyword`（単数）は無視される**。全件が返る。**`keywords`（配列）を使う**こと。
-  Simple Eagle は Web API の `keyword` を使っていたので、`keywords: [keyword]` に変換する
+- [x] **`keyword`（単数）は無視される**。全件が返る。`keywords`（配列）なら機能する。
+  ただし **`keywords` はファイル名しか見ない**ため、本実装では使わず JS 側で照合する（6.1.1）
 - [x] **`folders` フィルタは機能する**（実測で 421 件に絞り込まれた）
 - [x] **`tags` フィルタは機能する**（実測で `tags=NovelAI` が正しく絞り込まれた）
 - [x] **`item.moveToTrash()` は存在する**。Web API フォールバックは不要
