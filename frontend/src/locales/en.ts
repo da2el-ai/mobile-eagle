@@ -21,8 +21,15 @@ export default {
     apply: 'Apply',
     close: 'Close',
   },
+  breadcrumb: {
+    all: 'All',
+    uncategorized: 'Uncategorized',
+  },
   grid: {
     empty: 'No images to show',
+    toggleFit: 'Toggle fit',
+    sizeUp: 'Larger',
+    sizeDown: 'Smaller',
   },
   auth: {
     title: 'Authentication',

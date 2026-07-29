@@ -21,8 +21,15 @@ export default {
     apply: '決定',
     close: '閉じる',
   },
+  breadcrumb: {
+    all: 'すべて',
+    uncategorized: '未分類',
+  },
   grid: {
     empty: '表示する画像がありません',
+    toggleFit: '表示切替',
+    sizeUp: '大きく',
+    sizeDown: '小さく',
   },
   auth: {
     title: '認証',

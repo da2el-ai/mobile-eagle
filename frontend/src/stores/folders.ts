@@ -31,6 +31,21 @@ export const useFoldersStore = defineStore('folders', () => {
     }
   }
 
+  // ルートから該当フォルダまでの並び（パンくず用。grid.md 3.2）。
+  // 未ロード・不正 ID のときは空配列を返す（パンくずは「すべて」だけになる）。
+  function findPath(folderId: string): TFolderItem[] {
+    const walk = (list: TFolderItem[], trail: TFolderItem[]): TFolderItem[] | null => {
+      for (const folder of list) {
+        const next = [...trail, folder];
+        if (folder.id === folderId) return next;
+        const found = walk(folder.children, next);
+        if (found) return found;
+      }
+      return null;
+    };
+    return walk(folders.value, []) ?? [];
+  }
+
   // 子孫を含む合算件数（folder-tree.md）。
   // 既知課題: 同じ画像が親子両方のフォルダに属すると二重計上する（base.md 15 章）。
   function totalImageCount(folder: TFolderItem): number {
@@ -46,6 +61,7 @@ export const useFoldersStore = defineStore('folders', () => {
     totalCount,
     isLoaded,
     load,
+    findPath,
     totalImageCount,
   };
 });

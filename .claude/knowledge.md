@@ -201,3 +201,50 @@ OS ログイン直後だと、Eagle 起動時点で `utun*` がまだ `os.networ
 
 `yarn build`（`vue-tsc -b && vite build`）のたびに tsbuildinfo は再生成される。
 gitignore しているので通常は問題ないが、`git clean` 等で消しても実害はない（キャッシュのため）。
+
+### `yarn build` は `plugin/public/`（旧アプリの配信物）を上書きする
+
+`vite.config.ts` の `outDir` が `../plugin/public`・`emptyOutDir: true` なので、
+**型チェックのつもりで `yarn build` を実行すると旧アプリが消える**（実際に踏んだ）。
+新旧の並行稼働（`:8000` = 旧アプリ / `:5173` = Vite dev の新アプリ）は
+バグ切り分けの前提なので、本ビルド切り替え（base.md 14 章の最終マイルストーン）までは実行しない。
+
+型だけ確認したいときは `npx vue-tsc --noEmit -p tsconfig.json` を使う。
+
+---
+
+## グリッドビュー（描画方式）
+
+### `content-visibility: auto` のセルを `repeat(N, 1fr)` に置くと列が画面外へはみ出す
+
+`grid-template-columns: repeat(N, 1fr)` の `1fr` は **`minmax(auto, 1fr)` と等価**で、
+列はセルの min-content 幅より細くならない。グリッドセルには `content-visibility: auto` と
+セットで `contain-intrinsic-size`（幅・高さ）を指定しているため、
+**画面外のセルはこの幅を min-content として主張する**。
+結果、列数を増やしてもトラックが縮まず、増えた列がコンテナの外（画面右）へ押し出される。
+
+症状が分かりにくい：`grid-template-columns` の値は正しいのに列が 1 つ少なく見え、
+2 行目以降の並びがずれる。DevTools 上も値は正常に見えるため、原因に辿り着きにくい
+（`margin-left: -100px` で画面外のセルを引き戻して初めて確定した）。
+
+**対策**：`repeat(N, minmax(0, 1fr))` にして下限を外す（`components/grid/GridView.vue`）。
+**`minmax(0, …)` を `1fr` に戻さないこと。** 一見冗長に見えるが、
+`content-visibility` 方式（base.md 11 章）を採る限り必須。
+
+### `<main>` の内部スクロールは親の高さが確定していないと成立しない
+
+シェル（`App.vue` のルート）を `min-height: 100vh` にすると、中身が増えたときシェル自体が
+伸びるため `flex-1` の `<main>` も伸び、`overflow-y: auto` が働かず window スクロールになる。
+DOM 仮想化を捨てた代わりの `content-visibility` 方式は
+「内部スクロールのコンテナ」を前提にしている（base.md 11 章）。
+
+**対策**：`.app-shell { height: 100vh; height: 100dvh; }`（`css/main.css`）で高さを固定する。
+`dvh` はモバイル Safari のアドレスバー伸縮に追随させるため。非対応環境は `vh` にフォールバックする。
+
+### `IntersectionObserver` は交差状態が変わらないと再通知しない
+
+無限スクロールの番兵は、1 ページ読んでも画面が埋まらない場合（大画面・列数が多い）に
+可視のままとなり、追加の通知が来ないため続きを読めなくなる。
+
+**対策**：ロード完了後に `unobserve()` → `observe()` で監視を張り直して再評価させる
+（`GridView.vue` の `reobserveSentinel()`）。

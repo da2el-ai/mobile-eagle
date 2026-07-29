@@ -39,12 +39,18 @@ Mobile Eagle の基本画面。ヘッダー・パンくずリスト・サムネ�
 - 区切りは chevron アイコン。折り返し可（`flex-wrap`）
 - 現在地は `--fg` / bold、祖先は `--accent`。クリックで該当フォルダへ `router.push`
 - 各項目は `max-width: 140px` で ellipsis
+- **フォルダを切り替えてもフィルタ query は維持する**（`image` だけ落とす）。
+  旧実装の「フィルタ文脈の喪失」（base.md 2 章）を繰り返さないため。
+  遷移処理は `composables/use-folder-navigation.ts` に置き、フォルダツリーからも使う
 
 ### 3.3 サムネイルグリッド
 
-- `display: grid; gap: 3px; padding: 3px; grid-template-columns: repeat(N, 1fr)`
+- `display: grid; gap: 3px; padding: 3px; grid-template-columns: repeat(N, minmax(0, 1fr))`
   （N はグリッド列数。**inline style で指定**する — Tailwind の動的クラス生成は purge で
   消えるリスクがあるため使わない）
+- **`1fr` ではなく `minmax(0, 1fr)` を使う**。`1fr` は `minmax(auto, 1fr)` と等価で、
+  `content-visibility` セルの `contain-intrinsic-size` が min-content 幅として効き、
+  列数を増やしても列が縮まず画面外へはみ出す（knowledge.md に詳細）
 - グリッド最下部に 120px の余白（グリッドコントローラーがサムネイルに被らないように）
 - 0 件時は「表示する画像がありません」を中央表示
 
@@ -246,9 +252,9 @@ Eagle 側での変更を検知して一覧を自動更新する（改造版 kair
 
 前提: base.md のステップ 1〜4 が完了していること。
 
-- [ ] 1. ヘッダー + パンくずリストを実装する（各ボタンはダイアログ未実装のためプレースホルダー可）
-- [ ] 2. サムネイルグリッド + 無限スクロールを実装する（`/folder/all` で全件閲覧できる）
-- [ ] 3. グリッドコントローラー（fit 切替・列数変更・永続化）を実装する
+- [x] 1. ヘッダー + パンくずリストを実装する（各ボタンはダイアログ未実装のためプレースホルダー可）
+- [x] 2. サムネイルグリッド + 無限スクロールを実装する（`/folder/all` で全件閲覧できる）
+- [x] 3. グリッドコントローラー（fit 切替・列数変更・永続化）を実装する
 
 > 📌 **コミットポイント grid-1** — スマホで全画像をスクロール閲覧できる。上端に戻っても
 > 1 列目が欠けない。フォルダ URL 直打ちで 11 件バグが再現しない。列数変更・fit 切替が再読込後も保持される

@@ -38,6 +38,16 @@ body {
   padding: 0;
 }
 
+/*
+ * アプリのシェル。<main> の内部スクロールを成立させるには親の高さが確定している
+ * 必要がある（min-height ではシェルが中身に合わせて伸び、window スクロールになる。base.md 11 章）。
+ * dvh 非対応の環境は vh にフォールバックする。
+ */
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+
 body {
   background: var(--bg);
   color: var(--fg);
