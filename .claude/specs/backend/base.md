@@ -75,7 +75,9 @@ Simple Eagle と互換にする。**
 
 ```
 plugin/
-  manifest.json         … serviceMode: true / devTools: true（開発中のみ。配布時は false にする）
+  manifest.json         … serviceMode: true / devTools: false
+                          （開発中は true にしてよいが、**コミット時は false に戻す**。
+                            true だとウィンドウを開くたび devtools が開いてしまう）
   index.html            … ステータスウィンドウ（この仕様では最小限のガワのみ）
   js/
     main.js             … エントリポイント。ライフサイクルイベントの結線のみ

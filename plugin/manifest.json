@@ -6,7 +6,7 @@
   "name": "Mobile Eagle",
   "logo": "logo.png",
   "keywords": ["mobile", "smartphone", "viewer", "server"],
-  "devTools": true,
+  "devTools": false,
   "main": {
     "url": "index.html",
     "serviceMode": true,
