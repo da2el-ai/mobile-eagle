@@ -5,9 +5,11 @@ import ActionView from './ActionView.vue';
 import FolderCell from './FolderCell.vue';
 import GridCell from './GridCell.vue';
 import GridController from './GridController.vue';
+import LightboxView from '@/components/lightbox/LightboxView.vue';
 import { useAutoReload } from '@/composables/use-auto-reload';
 import { useFolderNavigation } from '@/composables/use-folder-navigation';
 import { useI18n } from '@/composables/use-i18n';
+import { useLightbox } from '@/composables/use-lightbox';
 import { useRouteContext } from '@/composables/use-route-context';
 import { useSettings } from '@/composables/use-settings';
 import { useFoldersStore } from '@/stores/folders';
@@ -29,6 +31,7 @@ const route = useRoute();
 const { folderId, filter } = useRouteContext();
 const { settings, update } = useSettings();
 const { navigateToFolder } = useFolderNavigation();
+const { open: openLightbox } = useLightbox();
 const folders = useFoldersStore();
 const items = useItemsStore();
 const selection = useSelectionStore();
@@ -160,7 +163,7 @@ const onSelectCell = (item: TImageItem): void => {
     selection.toggle(item.id);
     return;
   }
-  // TODO(lightbox): 通常時は query に image={id} を push して Lightbox を開く（grid.md 3.3）。
+  openLightbox(item.id);
 };
 
 // 子フォルダへ潜る。フィルタ query は維持される（use-folder-navigation）。
@@ -221,4 +224,6 @@ const onSelectFolder = (folder: TFolderItem): void => {
   <GridController v-if="!route.query.image" :max-cols="maxCols" />
 
   <ActionView v-if="selection.isSelectMode" />
+
+  <LightboxView />
 </template>
