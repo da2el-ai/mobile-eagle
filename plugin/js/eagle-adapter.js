@@ -131,7 +131,11 @@ ME.eagleAdapter = (() => {
      * @param {object} params { limit, offset, keyword, ext, tags, stars, folders }
      *   offset は「ページ番号」であり、アイテム数ではない（Simple Eagle と同じ仕様）
      *   ext / stars はカンマ区切りの複数値可。folders=uncategorized は未分類を表す
-     * @returns {Promise<object[]>} TImageItem 互換の配列
+     * @returns {Promise<{data: object[], totalCount: number}>}
+     *   data は TImageItem 互換の配列、totalCount は**ページング前**の該当総数。
+     *   totalCount は自動更新の変更検知に使う（フロントは先頭1件＋総数で
+     *   シグネチャを作る。総数が無いと削除を検知できない。grid.md 6.1）。
+     *   どうせ全件フィルタしてから slice しているので追加コストは無い
      */
     async getItems(params) {
       const condition = buildCondition(params);
@@ -176,7 +180,10 @@ ME.eagleAdapter = (() => {
 
       const limit = params.limit;
       const start = params.offset * limit;
-      return items.slice(start, start + limit).map(mapItem);
+      return {
+        data: items.slice(start, start + limit).map(mapItem),
+        totalCount: items.length,
+      };
     },
 
     /**

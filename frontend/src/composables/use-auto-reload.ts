@@ -1,6 +1,6 @@
 import { nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { fetchItems } from '@/api/eagle-api';
+import { fetchListMeta } from '@/api/eagle-api';
 import { useRouteContext } from '@/composables/use-route-context';
 import { useSettings } from '@/composables/use-settings';
 import { useAuthStore } from '@/stores/auth';
@@ -41,18 +41,17 @@ export function useAutoReload(getScrollEl: () => HTMLElement | null) {
     !items.isLoading &&
     !items.isReloading;
 
-  // 先頭 1 件から "${id}:${modificationTime}" を作る。0 件は 'empty'。
+  // シグネチャは "${先頭のid}:${先頭のmodificationTime}:${該当総数}"（0 件は 'empty:0'）。
+  // **総数を含めるのは削除を検知するため。** 先頭 1 件だけでは、先頭以外のアイテムを
+  // 削除しても値が変わらず一覧が更新されない（実機で判明。grid.md 6.1）。
   // 取得失敗時は null を返し、判定せず次回に回す（grid.md 6.2）。
   const readSignature = async (): Promise<string | null> => {
     try {
-      const data = await fetchItems({
+      const { head, totalCount } = await fetchListMeta({
         folderId: folderId.value,
         filter: filter.value,
-        offset: 0,
-        limit: 1,
       });
-      const head = data[0];
-      return head ? `${head.id}:${head.modificationTime}` : 'empty';
+      return head ? `${head.id}:${head.modificationTime}:${totalCount}` : `empty:${totalCount}`;
     } catch {
       return null;
     }

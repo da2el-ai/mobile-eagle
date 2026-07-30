@@ -84,10 +84,10 @@ ME.apiEagle = (() => {
 
   return {
     register() {
-      // 画像一覧
+      // 画像一覧（ページング前の該当総数 totalCount も返す）
       ME.server.addRoute('GET', `${PREFIX}/list`, async (req, res) => {
         const query = parseQuery(req.url);
-        const items = await ME.eagleAdapter.getItems({
+        const result = await ME.eagleAdapter.getItems({
           limit: intParam(query, 'limit', 200),
           // offset はページ番号（アイテム数ではない）。Simple Eagle と同じ仕様
           offset: intParam(query, 'offset', 0),
@@ -98,7 +98,12 @@ ME.apiEagle = (() => {
           tags: query.tags,
           folders: query.folders,
         });
-        ME.server.sendJson(res, 200, { status: 'success', data: items }, req);
+        ME.server.sendJson(res, 200, {
+          status: 'success',
+          data: result.data,
+          // 自動更新の変更検知に使う（削除の検知に必要。grid.md 6.1）
+          totalCount: result.totalCount,
+        }, req);
       });
 
       // フォルダ一覧（拡張子リスト・未分類件数・全件数も返す）

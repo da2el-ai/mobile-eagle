@@ -38,6 +38,11 @@ interface FoldersResponse extends ApiResponse<TFolderItem[]> {
   totalCount?: number;
 }
 
+// /list はページング前の該当総数も返す（自動更新の変更検知に使う。grid.md 6.1）。
+interface ItemsResponse extends ApiResponse<TImageItem[]> {
+  totalCount?: number;
+}
+
 // JSON を取得する共通処理。response.ok と data.status の両方を確認し、失敗は throw する。
 async function requestJson<T extends ApiResponse<unknown>>(
   url: string,
@@ -84,8 +89,8 @@ export interface FetchItemsParams {
   limit?: number;
 }
 
-// 画像一覧を取得する。フィルタは query に載せてサーバー側で絞り込ませる。
-export async function fetchItems(params: FetchItemsParams): Promise<TImageItem[]> {
+// /list の query を組み立てる（一覧取得と変更検知で共用する）。
+function buildItemsQuery(params: FetchItemsParams): URLSearchParams {
   const query = new URLSearchParams();
   query.set('limit', String(params.limit ?? ITEM_GET_COUNT));
   query.set('offset', String(params.offset));
@@ -101,8 +106,25 @@ export async function fetchItems(params: FetchItemsParams): Promise<TImageItem[]
   if (tags.length > 0) query.set('tags', tags.join(','));
   if (keyword) query.set('keyword', keyword);
 
-  const res = await requestJson<ApiResponse<TImageItem[]>>(`${API_BASE_URL}/list?${query}`);
+  return query;
+}
+
+// 画像一覧を取得する。フィルタは query に載せてサーバー側で絞り込ませる。
+export async function fetchItems(params: FetchItemsParams): Promise<TImageItem[]> {
+  const query = buildItemsQuery(params);
+  const res = await requestJson<ItemsResponse>(`${API_BASE_URL}/list?${query}`);
   return res.data ?? [];
+}
+
+// 自動更新の変更検知用（grid.md 6.1）。先頭 1 件と該当総数だけを取る。
+// 総数が無いと「削除」を検知できない（先頭が変わらないため）。
+export async function fetchListMeta(params: {
+  folderId: string;
+  filter: TFilter;
+}): Promise<{ head: TImageItem | null; totalCount: number }> {
+  const query = buildItemsQuery({ ...params, offset: 0, limit: 1 });
+  const res = await requestJson<ItemsResponse>(`${API_BASE_URL}/list?${query}`);
+  return { head: res.data?.[0] ?? null, totalCount: res.totalCount ?? 0 };
 }
 
 // フォルダ一覧（拡張レスポンス）を取得する（base.md 10 章）。
