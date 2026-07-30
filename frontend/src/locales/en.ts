@@ -56,6 +56,17 @@ export default {
     deleteFailed: 'Failed to delete',
     moveFailed: 'Failed to move to the folder',
   },
+  settings: {
+    autoReload: 'Auto refresh',
+    enabled: 'On',
+    disabled: 'Off',
+    autoReloadInterval: 'Refresh interval (seconds)',
+    autoReloadIntervalHelp: '2–120 seconds (default 10)',
+    maxFileSize: 'File size limit (KB)',
+    maxFileSizeHelp: 'Images larger than this are compressed. 0 = no compression / blank = 768',
+    quality: 'JPEG quality',
+    qualityHelp: 'Blank = 85',
+  },
   lightbox: {
     prev: 'Previous image',
     next: 'Next image',

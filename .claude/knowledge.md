@@ -243,6 +243,25 @@ gitignore しているので通常は問題ないが、`git clean` 等で消し�
 **対策**：`export PATH="$HOME/.nodebrew/node/v22.20.0/bin:$PATH"` を通してから
 `yarn dev --host` を実行する。グローバル `fetch` を使うスモークテストも同様。
 
+### Vue 3 の `v-model` は `type="number"` の input を勝手に数値へキャストする
+
+`<input type="number" v-model="draft">` の `draft` が `ref<string>` でも、
+**Vue 3 は `.number` 修飾子なしで数値キャストを掛ける**（`vModelText` が
+`vnode.props.type === 'number'` を見て `looseToNumber` する）。
+結果 `ref<string>` に number が入り、`draft.value.trim()` が
+`TypeError: trim is not a function` で落ちる。
+
+**症状が原因から遠い**：例外は `@input` ハンドラの中で飲み込まれるため、
+コンソールを見ていないと気付かない。ユーザーから見た症状は
+「数値を入力してもフォーカスを外した瞬間に消える」だけ
+（= `update()` に到達せず設定が null のまま、blur で表示が空へ同期される）。
+TypeScript も v-model 経由の代入は検査しないためすり抜ける。
+
+**対策**：数値入力は `v-model` を使わず `:value` + `@input` で組み、
+`(e.target as HTMLInputElement).value` から**常に string として**取り出す
+（`SettingsDialog.vue`）。`.number` を明示して number 前提で書く手もあるが、
+空欄が `''`（string）で来るため型が `string | number` に割れて扱いにくい。
+
 ---
 
 ## グリッドビュー（描画方式）

@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import AppIcon from '@/components/common/AppIcon.vue';
 import { useI18n } from '@/composables/use-i18n';
 import { useRouteContext } from '@/composables/use-route-context';
-import { useSettings } from '@/composables/use-settings';
 import { useSelectionStore } from '@/stores/selection';
 import { useUiStore } from '@/stores/ui';
 
@@ -23,11 +21,6 @@ const toggleSelectMode = (): void => {
   if (selection.isSelectMode) selection.exitSelectMode();
   else selection.enterSelectMode();
 };
-
-// TODO(base-1): テーマ切替の一時ボタン。設定ダイアログ（settings.md）実装後に撤去する。
-const { settings, update } = useSettings();
-const isDark = computed(() => settings.theme === 'dark');
-const toggleTheme = (): void => update({ theme: isDark.value ? 'light' : 'dark' });
 </script>
 
 <template>
@@ -68,15 +61,6 @@ const toggleTheme = (): void => update({ theme: isDark.value ? 'light' : 'dark' 
         @click="ui.isSettingsOpen = true"
       >
         <AppIcon name="settings" :size="22" />
-      </button>
-      <!-- TODO(base-1): テーマ切替の一時ボタン。設定ダイアログ実装後に撤去する。 -->
-      <button
-        type="button"
-        :class="[BUTTON_CLASS, stateClass(false)]"
-        :aria-label="t('theme.label')"
-        @click="toggleTheme"
-      >
-        <AppIcon :name="isDark ? 'sun' : 'moon'" :size="22" />
       </button>
     </div>
   </header>

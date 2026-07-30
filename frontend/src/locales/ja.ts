@@ -56,6 +56,17 @@ export default {
     deleteFailed: '削除に失敗しました',
     moveFailed: 'フォルダ移動に失敗しました',
   },
+  settings: {
+    autoReload: '自動更新',
+    enabled: '有効',
+    disabled: '無効',
+    autoReloadInterval: '自動更新間隔（秒）',
+    autoReloadIntervalHelp: '2〜120秒（規定 10 秒）',
+    maxFileSize: 'ファイルサイズ上限（KB）',
+    maxFileSizeHelp: 'この値より大きい画像は圧縮して表示します。0 = 圧縮しない / 空欄 = 768',
+    quality: 'JPEG 圧縮率',
+    qualityHelp: '空欄 = 85',
+  },
   lightbox: {
     prev: '前の画像',
     next: '次の画像',
