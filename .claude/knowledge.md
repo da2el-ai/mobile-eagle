@@ -234,6 +234,16 @@ gitignore しているので通常は問題ないが、`git clean` 等で消し�
 
 型だけ確認したいときは `npx vue-tsc --noEmit -p tsconfig.json` を使う。
 
+### `plugin/public/` に手で置いたファイルはビルドで消える
+
+`vite.config.ts` が `outDir: '../plugin/public'` + `emptyOutDir: true` のため、
+**`plugin/public/` はフロントエンドのビルド成果物専用**である。
+
+バージョン表記の実装時、`plugin/public/version.txt` を置いてフロントから読む案を検討したが、
+この設定では `yarn build` のたびに消えるため成立しない。
+**プラグイン側の情報をフロントエンドへ渡すには API を通す**（今回は `GET /api/version`。base.md 6 章）。
+静的ファイルとして同梱したい場合は `frontend/public/` へ置き、Vite にコピーさせる必要がある。
+
 ### `yarn dev` は Node v16 以下では起動できない
 
 `crypto$2.getRandomValues is not a function` で落ちる（Vite 5 が `crypto.getRandomValues` を

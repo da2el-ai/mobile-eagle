@@ -106,6 +106,12 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 `/ping` ではなく `/api/ping` とするのは、coding.md「API のパスは `/api/` 配下にまとめる」の規約と、
 6.8 の「`/api/` 以外はすべて静的配信」に一致させるため。
 
+`GET /api/version` でプラグインのバージョンを返す（`{ "status": "success", "version": "1.0.0" }`）。
+**`manifest.json` の `version` が単一ソース**で、`ME.version`（`plugin/js/version.js`）が
+起動時に一度だけ `fs` で読んでキャッシュする（ソースにハードコードしない）。
+`eagle.plugin.manifest` は plugin-test.md に検証記録がないため使わない。
+認証は不要（`auth.js` が保護するのは `/api/eagle/*` のみ。auth.md 5.3）。
+
 ### 6.1 `GET /api/eagle/list` — 画像一覧
 
 | パラメータ | 型 | 既定値 | 説明 |

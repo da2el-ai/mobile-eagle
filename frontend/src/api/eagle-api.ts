@@ -195,6 +195,15 @@ export async function checkAuth(): Promise<AuthCheck> {
   return { authRequired: !!data.authRequired, authenticated: !!data.authenticated };
 }
 
+// バージョン（プラグインの manifest.json が単一ソース）。認証不要・起動時に一度だけ取得する。
+// 補助情報なので、取得できなければ null を返して表示を省く（画面は壊さない）。
+export async function fetchVersion(): Promise<string | null> {
+  const res = await fetch('/api/version');
+  if (!res.ok) return null;
+  const data = await res.json();
+  return typeof data.version === 'string' && data.version ? data.version : null;
+}
+
 // パスワードでログインする。true=成功 / false=パスワード不一致（401）。それ以外の失敗は throw。
 export async function login(password: string): Promise<boolean> {
   const res = await fetch('/api/auth/login', {

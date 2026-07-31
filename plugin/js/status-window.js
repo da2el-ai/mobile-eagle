@@ -372,6 +372,16 @@ ME.statusWindow = (() => {
     el.clear = document.getElementById('sw-clear');
     el.clearIcon = document.getElementById('sw-clear-icon');
     el.log = document.getElementById('sw-log');
+    el.version = document.getElementById('sw-version');
+  }
+
+  /**
+   * バージョンを最下部に表示する（manifest.json が単一ソース）。
+   * 読み取れなかった場合は空欄のままにする（「v」だけ出すより無表示が良い）。
+   */
+  function renderVersion() {
+    const version = ME.version.load();
+    el.version.textContent = version ? `v${version}` : '';
   }
 
   function init() {
@@ -405,6 +415,7 @@ ME.statusWindow = (() => {
     renderLog(ME.logger.getLines());
     renderUrl();
     renderQr();
+    renderVersion();
 
     // 起動直後の IP 不在チェック（Tailscale utun* の遅延出現に対応。5 章・9 章）。
     checkIpAvailabilityAfterBoot();

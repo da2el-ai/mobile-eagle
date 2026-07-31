@@ -76,6 +76,13 @@ ME.static = (() => {
 
   return {
     /**
+     * プラグインのルートディレクトリ（絶対パス）。
+     * manifest.json を読む version.js からも使うため公開している。
+     * @returns {string}
+     */
+    pluginRoot: resolvePluginRoot,
+
+    /**
      * 静的ファイルとしてリクエストを処理する。server.js から呼ばれる。
      * @param {string} pathname デコード済み・クエリ除去済みのパス
      * @param {http.ServerResponse} res

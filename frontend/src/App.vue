@@ -10,6 +10,7 @@ import ToastHost from '@/components/common/ToastHost.vue';
 import AuthDialog from '@/components/auth/AuthDialog.vue';
 import { useTheme } from '@/composables/use-theme';
 import { useI18n } from '@/composables/use-i18n';
+import { useVersion } from '@/composables/use-version';
 import { useAuthStore } from '@/stores/auth';
 import { useFoldersStore } from '@/stores/folders';
 import { useUiStore } from '@/stores/ui';
@@ -21,12 +22,17 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const folders = useFoldersStore();
 const ui = useUiStore();
+const { load: loadVersion } = useVersion();
 
 // 401 共通処理: セッション失効で認証ダイアログを再表示する（auth.md 5 章）。
 setUnauthorizedHandler(() => auth.requireLogin());
 
 // 起動時に認証チェック（auth.md 3 章）。status !== 'ok' の間はデータをロードしない。
-onMounted(() => auth.check());
+// バージョンも起動時に一度だけ取得する（設定ダイアログの表示用。認証不要）。
+onMounted(() => {
+  auth.check();
+  void loadVersion();
+});
 
 // 認証 OK になったらフォルダツリー（パンくず・拡張子リストの元）を読む。
 // 一覧は GridView のマウント時に読む（再ログイン時も再マウントで復帰する）。

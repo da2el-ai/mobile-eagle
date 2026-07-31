@@ -4,6 +4,7 @@ import AppDialog from '@/components/common/AppDialog.vue';
 import ChipButton from '@/components/common/ChipButton.vue';
 import { useI18n } from '@/composables/use-i18n';
 import { useSettings, type Theme } from '@/composables/use-settings';
+import { useVersion } from '@/composables/use-version';
 import { useUiStore } from '@/stores/ui';
 
 // 設定ダイアログ（settings.md 3 章）。
@@ -11,6 +12,8 @@ import { useUiStore } from '@/stores/ui';
 // （旧実装の「項目によって保存タイミングが違う」非対称を解消するため）。
 const { t } = useI18n();
 const { settings, update } = useSettings();
+// 起動時に取得済みの値を読むだけ（ダイアログを開くたびの通信は発生しない）。
+const { version } = useVersion();
 const ui = useUiStore();
 
 const close = (): void => {
@@ -166,6 +169,11 @@ const INPUT =
         >
         <span :class="HELP">{{ t('settings.qualityHelp') }}</span>
       </section>
+
+      <!-- バージョン表記（最下部）。取得できなかったときは表示しない -->
+      <p v-if="version" class="text-center text-xs text-muted">
+        v{{ version }}
+      </p>
     </div>
   </AppDialog>
 </template>
