@@ -343,6 +343,37 @@ Lightbox のメタデータシート（`MetadataSheet.vue`）に `backdrop-filte
 差し替わるコンテンツが背後に無いため同じ症状は起きない
 （blur を一律に禁止する話ではない、という区別のためここに書き残す）。
 
+### 非セキュアコンテキストではクリップボード API が使えず、代替手段にも罠がある
+
+**1. Clipboard API は secure context 専用**
+
+`navigator.clipboard` は https / localhost でしか存在しない。このアプリの実運用は
+Tailscale 経由の `http://100.x.x.x:8000` = 非セキュアなので undefined になる。
+**PC の localhost では動くのにスマホだけ失敗する**という分かりにくい差になる。
+`document.execCommand('copy')`（非推奨）が非セキュアで使える唯一の手段。
+
+**2. `execCommand` フォールバックは `focus()` が無いとクリップボードを破壊する**
+
+`textarea` を作って `setSelectionRange()` しても、**フォーカスが無いと document の
+選択範囲は作られない**。この状態で `execCommand('copy')` を呼ぶと、
+**空の選択がコピーされてクリップボードの中身が消える**。
+
+症状が原因から遠い：「コピーできない」ではなく「**ペーストしても何も出ず、
+コピー前の内容まで消える**」という形で出る。しかも `execCommand()` の戻り値は
+true を返すため、成否判定にも使えない。iPhone Safari で実際に踏んだ
+（Mac の Chrome / Safari は secure context 側を通るので再現しない）。
+この「クリップボードが消える」という報告が無ければ、
+「iOS では execCommand が塞がれた」と誤診して不要な HTTPS 化へ進むところだった。
+
+**対策**（`utils/clipboard.ts`）：
+- `focus()` → `setSelectionRange()` の順で呼ぶ
+- 安全網として `copy` イベントを capture で奪い、
+  `e.clipboardData.setData('text/plain', text)` で内容を直接差し込む。
+  選択範囲に依存しないため、環境差で選択の作成が崩れても効く
+- `textarea` は `opacity: 0` で重ねず画面外（`left: -9999px`）へ。
+  `font-size: 16px`（iOS のフォーカス時ズーム対策）、
+  `top` は現在のスクロール位置（フォーカス時の画面跳ね対策）
+
 ---
 
 ## 仕様策定

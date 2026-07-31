@@ -3,7 +3,9 @@ import { computed } from 'vue';
 import AppIcon from '@/components/common/AppIcon.vue';
 import { useI18n } from '@/composables/use-i18n';
 import { useFoldersStore } from '@/stores/folders';
+import { copyToClipboard } from '@/utils/clipboard';
 import { formatDateTime, formatSizeKB } from '@/utils/format';
+import { extractPositivePrompt } from '@/utils/prompt';
 import type { TImageItem } from '@/types';
 
 // メタデータビュー（lightbox.md 6 章）。画像タップでオーバーレイ表示する下部シート。
@@ -30,6 +32,17 @@ const folderName = (id: string): string => {
 };
 
 const resolution = computed(() => `${props.item.width} x ${props.item.height} px`);
+
+// A1111 方式のメタデータが annotation にあればポジティブプロンプトを取り出す（lightbox.md 6.4）。
+// null のときはコピーボタンを出さない。
+const positivePrompt = computed(() => extractPositivePrompt(props.item.annotation));
+
+const onCopyPrompt = async (): Promise<void> => {
+  const prompt = positivePrompt.value;
+  if (prompt === null) return;
+  const copied = await copyToClipboard(prompt);
+  window.alert(copied ? t('lightbox.promptCopied') : t('lightbox.promptCopyFailed'));
+};
 
 const LABEL = 'w-16 flex-none text-[rgba(255,255,255,.55)]';
 const BADGE =
@@ -71,6 +84,17 @@ const BADGE =
         :style="{ color: n <= item.star ? '#f5b301' : 'rgba(255,255,255,.32)' }"
         @click="emit('rate', item.star === n ? 0 : n)"
       >★</span>
+
+      <!-- ポジティブプロンプトのコピー（lightbox.md 6.4）。
+           self-center で星（30px）に対して縦中央に置く（既定の stretch だと縦に伸びる）。 -->
+      <button
+        v-if="positivePrompt !== null"
+        type="button"
+        :class="[BADGE, 'ml-2 self-center']"
+        @click="onCopyPrompt"
+      >
+        {{ t('lightbox.copyPrompt') }}
+      </button>
     </div>
 
     <div class="mb-2.5 break-all pr-11 text-[17px] font-bold">
