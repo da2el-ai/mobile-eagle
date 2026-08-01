@@ -173,7 +173,7 @@ Pack Plugin が作る `.eagleplugin` は拡張子が違うだけの zip アー�
 - `node_modules/` は**そのまま同梱される**。Eagle 側で `npm install` は走らないので、
   実行時依存（`qrcode`）を同梱しないとインストール後に動かない
 
-CI で Pack Plugin を再現する場合は `cd plugin && zip -r -X "../Mobile Eagle.eagleplugin" . -x '.*' '*/.*'`
+CI で Pack Plugin を再現する場合は `cd plugin && zip -r -X "../Mobile-Eagle.eagleplugin" . -x '.*' '*/.*'`
 で同じ構成になる。Pack Plugin で作った実物とファイル一覧を突き合わせて一致を確認済み（2026-08-02）。
 この仕様に依存しているのは [.github/workflows/release.yml](../.github/workflows/release.yml)。
 
@@ -420,3 +420,36 @@ Claude Design 製モックアップ（`.claude/design/Mobile Eagle.dc.html`）�
 意図的に落とす場合は、その旨と理由を仕様書に書き残す
 （folder-tree.md の「モックアップは『すべて』をツリーのルートにしているが踏襲しない」のように）。
 残る lightbox / settings も同じ穴が空いている可能性がある。
+
+---
+
+## GitHub Actions（配布・リリース）
+
+### タグ push のワークフローは「タグが指すコミット」から読まれる
+
+ワークフローファイルを追加したコミットより**前**のコミットにタグが付いていると、
+そのタグを push しても実行すべきワークフローが見つからず、**何も起きない**。
+エラーも出ないので「Actions が壊れている」と誤診しやすい。
+
+v1.0.0 で実際に踏んだ。`main` の最新にファイルがあっても参照されない
+（GitHub は push された ref のツリーだけを見る）。
+
+**ワークフローを追加・修正したら、修正コミットより後ろにタグを打ち直すこと。**
+打ち直しはローカルとリモートの両方を消す必要がある：
+
+```
+git tag -d v1.0.0
+git push origin :refs/tags/v1.0.0
+git tag -a v1.0.0 -m "v1.0.0" <新しいコミット>
+git push origin v1.0.0
+```
+
+### Release アセット名の半角スペースはドットに置換される
+
+`gh release create` に `Mobile Eagle.eagleplugin` を渡すと、GitHub 側で
+`Mobile.Eagle.eagleplugin` にリネームされて公開される。仕様なので回避できない。
+
+README に書いたファイル名と実際にダウンロードされる名前が食い違うため、
+**アセット名にスペースを入れない**（現在は `Mobile-Eagle.eagleplugin`）。
+プラグイン名は `manifest.json` の `name` から読まれるので、
+ファイル名は Eagle のインストール結果に影響しない。

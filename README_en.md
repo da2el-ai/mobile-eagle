@@ -105,7 +105,7 @@ You also do not need to install Python or Node.js separately.
 
 ## Installation
 
-1. Download the latest `Mobile Eagle.eagleplugin` from the [releases page](https://github.com/da2el-ai/mobile-eagle/releases)
+1. Download the latest `Mobile-Eagle.eagleplugin` from the [releases page](https://github.com/da2el-ai/mobile-eagle/releases)
 2. Double-click the file, and Eagle shows an install confirmation — go ahead and install it
 
 ## Usage

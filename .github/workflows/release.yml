@@ -1,7 +1,7 @@
 name: Release
 
 # v*.*.* のバージョンタグが push されたときに、
-# `Mobile Eagle.eagleplugin` を作って GitHub Releases に添付する。
+# `Mobile-Eagle.eagleplugin` を作って GitHub Releases に添付する。
 on:
   push:
     tags:
@@ -17,12 +17,12 @@ jobs:
 
     steps:
       - name: リポジトリをチェックアウトする
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Node.js をセットアップする
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       # manifest.json の version はバージョンの単一ソース
       #（plugin/js/version.js がここから読む）。
@@ -49,14 +49,19 @@ jobs:
       # - ドットで始まるファイルは除外する（.package-lock.json / .travis.yml / .DS_Store など）
       # .eagleplugin はフォーマット自体が zip なのでここでアーカイブするが、
       # これをさらに .zip で包むことはしない（Release にはこの1ファイルだけを添付する）。
+      #
+      # ファイル名にスペースを入れないこと。GitHub は Release アセット名の
+      # 半角スペースを必ずドットへ置換するため、"Mobile Eagle.eagleplugin" は
+      # ダウンロード時に "Mobile.Eagle.eagleplugin" になり、README の記載と食い違う。
+      # プラグイン名は manifest.json の name から読まれるので、ファイル名は自由に付けてよい。
       - name: .eagleplugin にパッキングする
         working-directory: plugin
-        run: zip -r -X "../Mobile Eagle.eagleplugin" . -x '.*' '*/.*'
+        run: zip -r -X "../Mobile-Eagle.eagleplugin" . -x '.*' '*/.*'
 
       - name: パッキング結果を確認する
         run: |
-          ls -l "Mobile Eagle.eagleplugin"
-          unzip -l "Mobile Eagle.eagleplugin" | head -20
+          ls -l Mobile-Eagle.eagleplugin
+          unzip -l Mobile-Eagle.eagleplugin | head -20
 
       # 同じタグでワークフローを再実行しても失敗しないよう、
       # Release が既にあればアセットの差し替えだけを行う。
@@ -65,9 +70,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" "Mobile Eagle.eagleplugin" --clobber
+            gh release upload "${GITHUB_REF_NAME}" Mobile-Eagle.eagleplugin --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" "Mobile Eagle.eagleplugin" \
+            gh release create "${GITHUB_REF_NAME}" Mobile-Eagle.eagleplugin \
               --title "${GITHUB_REF_NAME}" \
               --generate-notes
           fi
