@@ -1,0 +1,73 @@
+name: Release
+
+# v*.*.* のバージョンタグが push されたときに、
+# `Mobile Eagle.eagleplugin` を作って GitHub Releases に添付する。
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# gh release create / upload に必要
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: リポジトリをチェックアウトする
+        uses: actions/checkout@v4
+
+      - name: Node.js をセットアップする
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # manifest.json の version はバージョンの単一ソース
+      #（plugin/js/version.js がここから読む）。
+      # タグと食い違ったまま配布すると Eagle のプラグイン一覧に誤った版数が出るため、
+      # 不一致ならここで止める。
+      - name: タグと manifest.json のバージョンが一致するか検証する
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION="$(node -p "require('./plugin/manifest.json').version")"
+          echo "タグ: ${TAG_VERSION} / manifest.json: ${MANIFEST_VERSION}"
+          if [ "${TAG_VERSION}" != "${MANIFEST_VERSION}" ]; then
+            echo "::error::タグ ${GITHUB_REF_NAME} と plugin/manifest.json の version (${MANIFEST_VERSION}) が一致しません"
+            exit 1
+          fi
+
+      # qrcode などの実行時依存。node_modules は .eagleplugin に同梱される
+      #（Eagle 側では npm install できないため）。
+      - name: プラグインの依存をインストールする
+        run: npm ci --omit=dev
+        working-directory: plugin
+
+      # Eagle の Pack Plugin と同じ構成にする：
+      # - plugin/ 直下の中身をフラットに格納する（plugin/ というフォルダ階層は作らない）
+      # - ドットで始まるファイルは除外する（.package-lock.json / .travis.yml / .DS_Store など）
+      # .eagleplugin はフォーマット自体が zip なのでここでアーカイブするが、
+      # これをさらに .zip で包むことはしない（Release にはこの1ファイルだけを添付する）。
+      - name: .eagleplugin にパッキングする
+        working-directory: plugin
+        run: zip -r -X "../Mobile Eagle.eagleplugin" . -x '.*' '*/.*'
+
+      - name: パッキング結果を確認する
+        run: |
+          ls -l "Mobile Eagle.eagleplugin"
+          unzip -l "Mobile Eagle.eagleplugin" | head -20
+
+      # 同じタグでワークフローを再実行しても失敗しないよう、
+      # Release が既にあればアセットの差し替えだけを行う。
+      - name: Release にアップロードする
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "Mobile Eagle.eagleplugin" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" "Mobile Eagle.eagleplugin" \
+              --title "${GITHUB_REF_NAME}" \
+              --generate-notes
+          fi

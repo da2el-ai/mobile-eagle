@@ -164,6 +164,19 @@ JPEG は透過を持てない。`OffscreenCanvas` は初期状態が透明なの
 パッキングするとプラグインフォルダの中身ごとアーカイブされ、インストール後も
 プラグインフォルダから読み出して HTTP 配信できる。パッキング前後で挙動は変わらない。
 
+### `.eagleplugin` は「プラグインフォルダ直下をフラットに固めた zip」
+
+Pack Plugin が作る `.eagleplugin` は拡張子が違うだけの zip アーカイブ。中身は次のとおり。
+
+- `plugin/` というフォルダ階層は挟まず、**直下の中身をルートに置く**（`manifest.json` が最上位に来る）
+- **ドットで始まるファイルは除外される**（`.package-lock.json` / `.travis.yml` / `.eslintrc.json` / `.DS_Store` など）
+- `node_modules/` は**そのまま同梱される**。Eagle 側で `npm install` は走らないので、
+  実行時依存（`qrcode`）を同梱しないとインストール後に動かない
+
+CI で Pack Plugin を再現する場合は `cd plugin && zip -r -X "../Mobile Eagle.eagleplugin" . -x '.*' '*/.*'`
+で同じ構成になる。Pack Plugin で作った実物とファイル一覧を突き合わせて一致を確認済み（2026-08-02）。
+この仕様に依存しているのは [.github/workflows/release.yml](../.github/workflows/release.yml)。
+
 ---
 
 ## HTTP サーバー
