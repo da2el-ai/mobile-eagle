@@ -8,11 +8,13 @@ import MoveFolderDialog from '@/components/grid/MoveFolderDialog.vue';
 import SettingsDialog from '@/components/settings/SettingsDialog.vue';
 import ToastHost from '@/components/common/ToastHost.vue';
 import AuthDialog from '@/components/auth/AuthDialog.vue';
+import LibraryReloadDialog from '@/components/settings/LibraryReloadDialog.vue';
 import { useTheme } from '@/composables/use-theme';
 import { useI18n } from '@/composables/use-i18n';
 import { useVersion } from '@/composables/use-version';
 import { useAuthStore } from '@/stores/auth';
 import { useFoldersStore } from '@/stores/folders';
+import { useLibraryReloadStore } from '@/stores/library-reload';
 import { useUiStore } from '@/stores/ui';
 import { setUnauthorizedHandler } from '@/api/eagle-api';
 
@@ -22,6 +24,7 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const folders = useFoldersStore();
 const ui = useUiStore();
+const libraryReload = useLibraryReloadStore();
 const { load: loadVersion } = useVersion();
 
 // 401 共通処理: セッション失効で認証ダイアログを再表示する（auth.md 5 章）。
@@ -36,10 +39,13 @@ onMounted(() => {
 
 // 認証 OK になったらフォルダツリー（パンくず・拡張子リストの元）を読む。
 // 一覧は GridView のマウント時に読む（再ログイン時も再マウントで復帰する）。
+// ライブラリ再読み込みが実行中なら、実行中ダイアログに戻る（library-reload.md 4.3）。
 watch(
   () => auth.status,
   (status) => {
-    if (status === 'ok') void folders.load();
+    if (status !== 'ok') return;
+    void folders.load();
+    void libraryReload.resume();
   },
 );
 </script>
@@ -56,6 +62,7 @@ watch(
       <FilterDialog v-if="ui.isFilterOpen" />
       <MoveFolderDialog v-if="ui.isMoveOpen" />
       <SettingsDialog v-if="ui.isSettingsOpen" />
+      <LibraryReloadDialog v-if="libraryReload.isOpen" />
     </template>
 
     <!-- 接続エラー: 白画面で固まらせず再試行できるようにする（auth.md 3 章）。 -->

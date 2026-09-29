@@ -34,3 +34,21 @@ export interface TFilter {
   keyword: string;
   tags: string[];
 }
+
+// ライブラリの強制再読み込みの状態（backend/library-reload.md 6.3）。
+export type TLibraryReloadState = 'idle' | 'running' | 'done' | 'timeout' | 'error';
+export type TLibraryReloadReason =
+  | 'busy'
+  | 'delete_failed'
+  | 'switch_failed'
+  | 'not_rebuilt'
+  | 'library_changed'
+  | 'timeout';
+
+export interface TLibraryReload {
+  state: TLibraryReloadState;
+  // running: 開始からの経過 / done 等: 所要時間。サーバーで計算した値
+  elapsedMs: number;
+  timeoutMs: number;
+  reason: TLibraryReloadReason | null;
+}

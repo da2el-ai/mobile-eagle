@@ -132,7 +132,8 @@ frontend/
 - ダイアログの縦位置は **`align-items: flex-start`（上寄せ）**
 - グリッドは**ブラウザ幅 100% を使う**。コンテンツの max-width 指定はしない
 - z-index の階層: ヘッダー 20 / グリッドコントローラー 30 / アクションビュー 40 /
-  各ダイアログ 60 / 移動先選択ダイアログ 70 / Lightbox 80（メタデータビュー 86）/ 認証ダイアログ 95
+  各ダイアログ 60 / 移動先選択ダイアログ 70 / Lightbox 80（メタデータビュー 86・フィルムストリップ 88）/
+  ライブラリ再読み込みダイアログ 90 / 認証ダイアログ 95
 
 ### 5.3 フォント・アイコン
 
@@ -203,6 +204,7 @@ frontend/
 | `updateItem` | POST `/update` | `{ id, star?, tags?, annotation?, url? }` | |
 | `moveToTrash` | POST `/move_to_trash` | `{ itemIds: string[] }` | |
 | `moveToFolder` | POST `/move_to_folder` | `{ itemIds: string[], folderId: string }` | 拡張（10 章） |
+| `startLibraryReload` / `fetchLibraryReloadStatus` | POST `/reload_library` / GET `/reload_library_status` | なし | 失敗も 200 + `reload.state` で返る（[library-reload.md](library-reload.md)） |
 | `checkAuth` / `login` | GET `/api/auth/check` / POST `/api/auth/login` | | [auth.md](auth.md) 参照（ベースパス外） |
 
 重要な取り決め：

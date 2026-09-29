@@ -5,6 +5,7 @@ import ChipButton from '@/components/common/ChipButton.vue';
 import { useI18n } from '@/composables/use-i18n';
 import { useSettings, type Theme } from '@/composables/use-settings';
 import { useVersion } from '@/composables/use-version';
+import { useLibraryReloadStore } from '@/stores/library-reload';
 import { useUiStore } from '@/stores/ui';
 
 // 設定ダイアログ（settings.md 3 章）。
@@ -15,6 +16,7 @@ const { settings, update } = useSettings();
 // 起動時に取得済みの値を読むだけ（ダイアログを開くたびの通信は発生しない）。
 const { version } = useVersion();
 const ui = useUiStore();
+const libraryReload = useLibraryReloadStore();
 
 const close = (): void => {
   ui.isSettingsOpen = false;
@@ -84,6 +86,14 @@ const onQualityInput = (e: Event): void => {
 
 const onQualityBlur = (): void => {
   qualityDraft.value = settings.quality == null ? '' : String(settings.quality);
+};
+
+// ライブラリの強制再読み込み（library-reload.md 4.1）。
+// 確認後に設定ダイアログを閉じ、実行中ダイアログへ切り替える。
+const onReloadLibrary = (): void => {
+  if (!window.confirm(t('libraryReload.confirm'))) return;
+  close();
+  void libraryReload.start();
 };
 
 const LABEL = 'text-[13px] font-semibold text-muted';
@@ -168,6 +178,18 @@ const INPUT =
           @blur="onQualityBlur"
         >
         <span :class="HELP">{{ t('settings.qualityHelp') }}</span>
+      </section>
+
+      <section class="flex flex-col gap-2">
+        <span :class="LABEL">{{ t('settings.library') }}</span>
+        <button
+          type="button"
+          class="h-11 w-full rounded-[10px] border border-border bg-elev text-base text-fg hover:bg-hover"
+          @click="onReloadLibrary"
+        >
+          {{ t('settings.reloadLibrary') }}
+        </button>
+        <span :class="HELP">{{ t('settings.reloadLibraryHelp') }}</span>
       </section>
 
       <!-- バージョン表記（最下部）。取得できなかったときは表示しない -->

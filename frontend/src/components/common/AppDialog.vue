@@ -7,9 +7,9 @@ import { useI18n } from '@/composables/use-i18n';
 const props = withDefaults(
   defineProps<{
     title: string;
-    // 重なり順（base.md 5.2）。ダイアログ 60 / 移動先 70 / 認証 95。
+    // 重なり順（base.md 5.2）。ダイアログ 60 / 移動先 70 / ライブラリ再読み込み 90 / 認証 95。
     zIndex?: number;
-    // false のとき閉じるボタンを出さず、背景クリックでも閉じない（認証用）。
+    // false のとき閉じるボタンを出さず、背景クリックでも閉じない（認証・ライブラリ再読み込みの実行中）。
     closable?: boolean;
   }>(),
   { zIndex: 60, closable: true },

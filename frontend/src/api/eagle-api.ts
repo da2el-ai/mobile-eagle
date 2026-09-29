@@ -3,7 +3,7 @@
 
 import { API_BASE_URL, ITEM_GET_COUNT } from '@/env';
 import { useSettings } from '@/composables/use-settings';
-import type { TFilter, TFolderItem, TImageItem } from '@/types';
+import type { TFilter, TFolderItem, TImageItem, TLibraryReload } from '@/types';
 
 // 401 を表す専用エラー。認証ダイアログの再表示につなげる（auth.md 5 章で共通処理する）。
 export class UnauthorizedError extends Error {
@@ -162,6 +162,26 @@ export function moveToTrash(itemIds: string[]): Promise<ApiResponse<never>> {
 // 選択アイテムをフォルダへ移動する（置換）。folderId は実 ID または 'uncategorized'。
 export function moveToFolder(itemIds: string[], folderId: string): Promise<ApiResponse<never>> {
   return postJson(`/move_to_folder`, { itemIds, folderId });
+}
+
+// ライブラリの強制再読み込み（frontend/library-reload.md 6 章）。
+// 処理の失敗も 200 + reload.state = 'error' で返る（通信の失敗とは分けて「状態」として扱う）。
+interface LibraryReloadResponse extends ApiResponse<never> {
+  reload: TLibraryReload;
+}
+
+// 再読み込みを開始する。すでに実行中なら現在の状態が返る（二重には始まらない）。
+export async function startLibraryReload(): Promise<TLibraryReload> {
+  const res = await requestJson<LibraryReloadResponse>(`${API_BASE_URL}/reload_library`, {
+    method: 'POST',
+  });
+  return res.reload;
+}
+
+// 再読み込みの状態を取得する。
+export async function fetchLibraryReloadStatus(): Promise<TLibraryReload> {
+  const res = await requestJson<LibraryReloadResponse>(`${API_BASE_URL}/reload_library_status`);
+  return res.reload;
 }
 
 // サムネイル画像の URL を組み立てる（<img src> 用）。

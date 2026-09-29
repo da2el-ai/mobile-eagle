@@ -86,6 +86,17 @@ Enter selection mode from the multi-select button in the header.
 
 <img src="./docs/img/setting.png" alt="Settings screen">
 
+### Reloading the library
+
+When the same library on a NAS is opened in Eagle on several devices, changes made on another device (adding or deleting images, etc.) may not show up.
+In that case, run "Reload library" at the bottom of the settings screen.
+It reloads the library in the same way as "Empty cache and reload" in the Eagle menu.
+
+- The elapsed time is shown while it runs, and the list is updated when it finishes
+- Depending on the size and location of the library, it can take a few minutes (about 5 minutes for about 28,000 items on a NAS)
+- It relies on an undocumented part of Eagle, so it may stop working after an Eagle update.
+  If it does not work, run it from the Eagle menu instead
+
 
 ## What it cannot do
 
