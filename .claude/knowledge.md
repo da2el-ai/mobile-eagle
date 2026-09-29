@@ -177,6 +177,86 @@ CI で Pack Plugin を再現する場合は `cd plugin && zip -r -X "../Mobile-E
 で同じ構成になる。Pack Plugin で作った実物とファイル一覧を突き合わせて一致を確認済み（2026-08-02）。
 この仕様に依存しているのは [.github/workflows/release.yml](../.github/workflows/release.yml)。
 
+### 「キャッシュをクリアしてライブラリを再読み込み」を呼ぶ API は無い。キャッシュファイル削除＋`switch` で再現できる
+
+NAS 上のライブラリを複数端末で開いていると、他端末の操作（ゴミ箱移動など）が反映されないことがある。
+Eagle のメニュー「キャッシュをクリアしてライブラリを再読み込み」で直るが、これをプラグインから呼ぶ公式手段は無い
+（Eagle 4.0.0 / 2026-09-28 に実機で確認）。
+
+**効かなかったもの**
+
+- `eagle.library.switch(同じパス)`（未公開 API。`eagle.library` に `history` / `switch` / `icon` がある）：
+  `true` が 23ms で返り、画面は一瞬切り替わり `onLibraryChanged` も発火するが、キャッシュを読むだけなので古いまま。
+  中身は `ipcRenderer.r2r(parentID, 'library.switch', { libraryPath })` → 本体の `openLibrary()`
+- Web API `POST /api/library/switch`：内部は同じ `library.switch` ハンドラ
+- `ipcRenderer.send('reload-without-cache')`：プラグインの `require('electron')` は**空オブジェクト**で、
+  `require.cache` も空。本体の IPC には触れない。`eagle` API 経由で呼べる `registerHandler` の 49 個に再読み込み系は無い
+
+**本体の処理（`app.asar` を読んで確認）**
+
+メニューは `IPCHelper.send('reload-without-cache')` → バックグラウンドウィンドウの `reloadWithoutCache()` で、
+中身は次の 3 つ。
+
+1. ライブラリ直下の `mtime.json` を削除して作り直す
+2. `removeLibraryCache()`：**`<userData>/library-caches/<hashFnv32a(rootDir)>.txt`** を削除する
+3. `initLibrary()`：キャッシュファイルがあればそれを読み、無ければディスクの `images/*/metadata.json` から読み直す
+
+`hashFnv32a` は FNV-1a 32bit を 8 桁の hex にしたもの（計算式は [library-reload.js](../plugin/js/library-reload.js) の `hashFnv32a()` を参照）。
+`rootDir` は `eagle.library.path` と一致する（Mac / Windows とも、実在するファイル名と一致を確認）。
+`userData` は `eagle.app.userDataPath`。
+
+**再現方法**：プラグインの `fs` で上記 `.txt` を削除し、`eagle.library.switch(eagle.library.path)` を呼ぶ。
+キャッシュの再構築が走り、正しい状態に揃った（26570 件 → 26517 件。
+作り直された `.txt` は Mac 側のキャッシュとバイト数まで一致）。
+`mtime.json` は NAS 上で全端末が共有するため触っていないが、それでも直った。
+
+**落とし穴：`switch` は開き直す前にキャッシュを保存する（2026-09-29 に Mac で確認）**
+
+`switch` は読み込みの前に `saveCacheFile()` を走らせ、**メモリ上に未保存の変更**（`needUpdateCache`。
+auto-save のたびに false に戻る）**があればキャッシュファイルを書き出す**。
+つまり削除した直後に書き戻され、Eagle はそのキャッシュを読むだけで再構築しない
+（ログは `Update library cache successfully` → `Load library(cache)`）。
+キャッシュファイルもすぐ現れるので、「ファイルが現れた＝完了」の判定は**成功と誤判定する**。
+画像の追加・タグ変更などの直後に実行すると起きる（Web API でタグを付けた 60ms 後に実行して再現）。
+
+**対策**：先に `switch` だけを呼んで未保存の変更を書き出させ、読み込みが終わってから
+キャッシュ削除＋`switch` を行う。2 回目の保存は `No Changes, ignore update cache.` になり、再構築される
+（Mac で確認。1 回目の後 2 秒待った）。1 回目と 2 回目の間に新たな変更が入ると同じことが起きるので、
+間隔は短いほどよい。
+
+Eagle 本体のログは Mac では `~/Library/Logs/Eagle/log.log`。`Load library(cache)` / `No library cache`、
+`Cache File: YES/No`、`Loading time` が出るので、再構築したかどうかはここで確かめられる。
+プラグインからの `fs` 呼び出しも `[plugin] [Mobile Eagle…] "Calling fs.unlinkSync(…)"` として記録される。
+
+**危険：再構築中に `switch` を呼ぶと、一時的にライブラリが空になる（2026-09-29 に Windows で確認）**
+
+再構築の開始から 60 秒後に `switch` を呼ぶと、読み込みが**並行して 2 本**走った。
+先に始めた方は `Files: 0` で完了して **0 バイトのキャッシュを書き出し**、`onLibraryChanged` も発火した。
+約 1 分後に後から始めた方が `Files: 28148` で完了し、正しいキャッシュで上書きして自然に戻った。
+その間はプラグイン API も 0 件を返す。「ファイルが現れた＝完了」だと、この 0 バイトで誤判定する。
+
+- 再構築中（キャッシュファイルが無い間）は `switch` を呼ばない
+- 完了判定ではキャッシュファイルのサイズが 0 より大きいことも見る
+
+**`onLibraryChanged` は読み込みの完了直後に発火する**（Windows で確認）。
+キャッシュを読むだけの `switch` でも、再構築でも、`Loading time` のログから 15〜35ms 後に発火した。
+キャッシュファイルはその 30ms ほど前に書き出される。Windows（NAS）でキャッシュを読むだけの `switch` は約 3.4 秒
+（`/images` の一覧取得に 2.5 秒）。Windows の Eagle 本体のログは `%APPDATA%\Eagle\log.log`
+（`eagle.app.getPath('logs')` が返す `logs` フォルダではなく、`userData` の直下）。
+
+**Mac での所要時間**：ライブラリがローカルディスク（Synology Drive の同期フォルダ）にあると、
+2.8 万件でも 2〜3 秒で終わる（Windows で NAS を直接マウントした場合は約 4 分 20 秒）。
+
+**再構築中の挙動**
+
+- HTTP サーバーは止まらない。`eagle.item.get()` 系も応答するが、**完了までは古いデータを返す**
+- 約 4 分 20 秒かかった（2.6 万件、NAS 経由、Windows）
+- **キャッシュファイルは完了時に一度で書き出される。** 5 秒間隔で監視したところ、
+  削除直後から「無し」が続き、現れた時点で最終サイズだった（途中サイズは一度も観測されず）。
+  ただし「現れた＝完了」だけでは判定しない（書き戻し・0 バイトの誤判定がある。上記）。
+  実装は `onLibraryChanged` で完了を捉え、ファイルのサイズと更新時刻で確かめる（library-reload.js）
+- 非公開の内部実装（ファイル名の算出方法）に依存しているので、Eagle のアップデートで壊れる可能性がある
+
 ---
 
 ## HTTP サーバー

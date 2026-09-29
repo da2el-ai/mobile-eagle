@@ -185,6 +185,18 @@ ME.apiEagle = (() => {
         ME.server.sendJson(res, 200, { status: 'success' }, req);
       });
 
+      // ライブラリの強制再読み込みを開始する（backend/library-reload.md 6.1）。
+      // running にした時点で応答し、開始処理は非同期で進む。失敗も 200 + state:'error' で返す
+      // （処理結果を「状態」として 1 本化するため。requestJson は status:'error' を例外にする）
+      ME.server.addRoute('POST', `${PREFIX}/reload_library`, async (req, res) => {
+        ME.server.sendJson(res, 200, { status: 'success', reload: ME.libraryReload.start() }, req);
+      });
+
+      // 再読み込みの状態（6.2）
+      ME.server.addRoute('GET', `${PREFIX}/reload_library_status`, async (req, res) => {
+        ME.server.sendJson(res, 200, { status: 'success', reload: ME.libraryReload.getStatus() }, req);
+      });
+
       ME.logger.log(`${PREFIX} のエンドポイントを登録しました`);
     },
   };

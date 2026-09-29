@@ -112,6 +112,11 @@ HTTP ステータスは、指定されたリソースが存在しない場合は
 `eagle.plugin.manifest` は plugin-test.md に検証記録がないため使わない。
 認証は不要（`auth.js` が保護するのは `/api/eagle/*` のみ。auth.md 5.3）。
 
+ライブラリの強制再読み込み用に `POST /api/eagle/reload_library` と `GET /api/eagle/reload_library_status` がある
+（Simple Eagle には無い追加機能。仕様は [library-reload.md](library-reload.md)）。
+この 2 本は**処理の失敗も `200` + `{ status: 'success', reload: { state: 'error', ... } }` で返す**点で、
+上記のエラー時の共通仕様の例外になる（失敗を通信エラーではなく「状態」として扱うため）。
+
 ### 6.1 `GET /api/eagle/list` — 画像一覧
 
 | パラメータ | 型 | 既定値 | 説明 |

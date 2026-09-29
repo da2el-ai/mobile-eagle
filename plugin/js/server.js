@@ -83,6 +83,9 @@ ME.server = (() => {
     return 500;
   }
 
+  /** リクエストログに記録しないパス */
+  const QUIET_PATHS = new Set(['/api/eagle/reload_library_status']);
+
   /** リクエスト1件を処理する */
   function handleRequest(req, res) {
     // クエリ・ハッシュを除いたパスに正規化する
@@ -94,7 +97,11 @@ ME.server = (() => {
       return;
     }
 
-    ME.logger.log(`${req.method} ${pathname} from ${req.socket.remoteAddress}`);
+    // 再読み込みの状態確認は数秒おきにポーリングされ、直近 200 件のログを埋めてしまうため記録しない
+    // （開始・完了・中断は library-reload.js が記録する）
+    if (!QUIET_PATHS.has(pathname)) {
+      ME.logger.log(`${req.method} ${pathname} from ${req.socket.remoteAddress}`);
+    }
 
     // 前段フック（認証の差し込み点）
     if (!beforeRequest(req, res)) return;
