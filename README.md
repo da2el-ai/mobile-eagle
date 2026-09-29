@@ -116,8 +116,14 @@ Python や Node.js を別途インストールする必要もありません。
 
 ## インストール
 
-1. [リリースページ](https://github.com/da2el-ai/mobile-eagle/releases)から最新の `Mobile-Eagle.eagleplugin` をダウンロードします
-2. ファイルをダブルクリックすると Eagle のインストール確認が表示されるので、インストールします
+1. リリースページを開きます
+   - https://github.com/da2el-ai/mobile-eagle/releases
+2. いちばん上にある最新版（バージョン番号の横に `Latest` と表示されているもの）の **Assets** から、`Mobile-Eagle.eagleplugin` をクリックしてダウンロードします
+   - `Source code (zip)` / `Source code (tar.gz)` はソースコードなので、ダウンロードする必要はありません
+3. ダウンロードした `Mobile-Eagle.eagleplugin` をダブルクリックします
+4. Eagle にプラグインのインストール確認が表示されるので、インストールします
+
+インストールが済んだら、次の「使い方」に進んでください。
 
 ## 使い方
 
